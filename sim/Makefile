@@ -10,7 +10,7 @@ class: $(CLASSES)
 
 VirtualCOSMAC_ELF.jar: $(CLASSES)
 	echo "Main-Class: VirtualCOSMAC_ELF" >Manifest.txt
-	jar -cmf Manifest.txt $@ $(CLASSES)
+	jar -cmf Manifest.txt $@ $(CLASSES) *.ttf
 
 clean:
 	rm -f *.class
