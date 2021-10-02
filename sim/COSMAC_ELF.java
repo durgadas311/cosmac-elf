@@ -41,7 +41,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 	// Missed 2mS interrupt statistics
 	private long backlogNs;
 
-	public JPanel getFrontPanel() { return fp; }
+	public ELFFrontPanel getFrontPanel() { return fp; }
 
 	public COSMAC_ELF(Properties props, String lh) {
 		String s;
