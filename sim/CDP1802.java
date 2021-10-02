@@ -226,13 +226,13 @@ public class CDP1802 {
 	private void sub(int v, int ix) {
 		v = peek8(ix) - regD - v;
 		regD = v & 0xff;
-		DF = (v & 0x100) != 0;
+		DF = (v & 0x100) == 0;
 	}
 
 	private void subm(int v, int ix) {
 		v = regD - peek8(ix) - v;
 		regD = v & 0xff;
-		DF = (v & 0x100) != 0;
+		DF = (v & 0x100) == 0;
 	}
 
 	private void dmaIn() {
@@ -240,6 +240,10 @@ public class CDP1802 {
 		incr(0);
 		spcl = "DMA-IN";
 		ticks += 8;
+		if (idled) {
+			idled = false;
+			incr(regP);
+		}
 	}
 
 	private void dmaOut() {
@@ -247,6 +251,10 @@ public class CDP1802 {
 		incr(0);
 		spcl = "DMA-OUT";
 		ticks += 8;
+		if (idled) {
+			idled = false;
+			incr(regP);
+		}
 	}
 
 	public final int execute() {
@@ -503,9 +511,9 @@ public class CDP1802 {
 		case 0x70:	// RET
 			ffIE = true;
 			v = peek8(regX);
+			incr(regX);
 			regX = (v >> 4) & 0x0f;
 			regP = v & 0x0f;
-			incr(regX);	// TODO: before or after set?
 			break;
 		case 0x71:	// DIS
 			ffIE = false;
