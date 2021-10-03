@@ -2,7 +2,7 @@
 
 * Under Development *
 
-![Example](photos/screenshot-1.png)
+![Example](photos/screenshot-2.png)
 
 An original ELF from James Brown
 (http://www.cosmacelf.com/gallery/elf-and-microtutors/)

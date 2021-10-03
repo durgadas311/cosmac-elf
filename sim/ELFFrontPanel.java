@@ -12,14 +12,17 @@ import javax.sound.sampled.*;
 
 //    0   1    2    3     4     5     6      7    8     9
 // 0: +-------------------------------------------------+
-// 1: |                [DISP] [DISP]                    |
-// 2: |                                                 |
-// 3: | <IN> [LOAD]                       [MP]   [RUN]  |
+// 1: |                     LED                         |
+// 2: |                 DISP   DISP                     |
+// 3: |                    {ROM}                        |
 // 4: |                                                 |
-// 5: | [7]  [6]   [5]   [4]   [3]   [2]   [1]   [0]    |
-// 6: +-------------------------------------------------+
+// 5: | <IN> [LOAD]                       [MP]   [RUN]  |
+// 6: |                                                 |
+// 7: | [7]  [6]   [5]   [4]   [3]   [2]   [1]   [0]    |
+// 8: +-------------------------------------------------+
 //
 // <..> = momentary switch
+// {..} = jumper
 
 public class ELFFrontPanel extends JPanel
 		implements IODevice, DMAController, MouseListener {
@@ -31,6 +34,7 @@ public class ELFFrontPanel extends JPanel
 	private Font lesstiny;
 	private Font til311;
 	private Color wdw = new Color(70, 0, 0);
+	private Color phenolic = new Color(214, 176, 132);
 	private boolean input = false;
 	private Interruptor intr;
 	private int src;
@@ -120,13 +124,6 @@ public class ELFFrontPanel extends JPanel
 		pan.setOpaque(false);
 		gb.setConstraints(pan, gc);
 		add(pan);
-		gc.gridy = 2;
-		gc.gridx = 0;
-		pan = new JPanel();
-		pan.setPreferredSize(new Dimension(10, 10));
-		pan.setOpaque(false);
-		gb.setConstraints(pan, gc);
-		add(pan);
 		gc.gridy = 4;
 		gc.gridx = 0;
 		pan = new JPanel();
@@ -135,6 +132,13 @@ public class ELFFrontPanel extends JPanel
 		gb.setConstraints(pan, gc);
 		add(pan);
 		gc.gridy = 6;
+		gc.gridx = 0;
+		pan = new JPanel();
+		pan.setPreferredSize(new Dimension(10, 10));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
+		gc.gridy = 8;
 		gc.gridx = 9;
 		pan = new JPanel();
 		pan.setPreferredSize(new Dimension(10, 10));
@@ -142,23 +146,20 @@ public class ELFFrontPanel extends JPanel
 		gb.setConstraints(pan, gc);
 		add(pan);
 
-		gc.gridy = 1;
-		gc.gridx = 1;
-		// TODO: add TIL311 displays...
 		// [IN] button
-		gc.gridy = 3;
+		gc.gridy = 5;
 		gc.gridx = 1;
 		gb.setConstraints(in, gc);
 		add(in);
 		// [LOAD] button
-		gc.gridy = 3;
+		gc.gridy = 5;
 		gc.gridx = 2;
 		btns[LOAD].setSelected(true);
 		btns[LOAD].addMouseListener(this);
 		gb.setConstraints(btns[LOAD], gc);
 		add(btns[LOAD]);
 		// [MP] button
-		gc.gridy = 3;
+		gc.gridy = 5;
 		gc.gridx = 7;
 		btns[MP].setSelectedIcon(sw_r_on);
 		btns[MP].setIcon(sw_r_off);
@@ -166,13 +167,13 @@ public class ELFFrontPanel extends JPanel
 		gb.setConstraints(btns[MP], gc);
 		add(btns[MP]);
 		// [RUN] button
-		gc.gridy = 3;
+		gc.gridy = 5;
 		gc.gridx = 8;
 		btns[RUN].addMouseListener(this);
 		gb.setConstraints(btns[RUN], gc);
 		add(btns[RUN]);
 		// DATA buttons
-		gc.gridy = 5;
+		gc.gridy = 7;
 		gc.gridx = 1;
 		for (int x = 7; x >= 0; --x) {
 			if ((x & 3) == 0) {
@@ -185,28 +186,28 @@ public class ELFFrontPanel extends JPanel
 		}
 		// Button Labels
 		JLabel lab = getLabel("IN");
-		gc.gridy = 2;
+		gc.gridy = 4;
 		gc.gridx = 1;
 		gb.setConstraints(lab, gc);
 		add(lab);
 		lab = getLabel("LOAD");
-		gc.gridy = 2;
+		gc.gridy = 4;
 		gc.gridx = 2;
 		gb.setConstraints(lab, gc);
 		add(lab);
 		lab = getLabel("MP");
-		gc.gridy = 2;
+		gc.gridy = 4;
 		gc.gridx = 7;
 		gb.setConstraints(lab, gc);
 		add(lab);
 		lab = getLabel("RUN");
-		gc.gridy = 2;
+		gc.gridy = 4;
 		gc.gridx = 8;
 		gb.setConstraints(lab, gc);
 		add(lab);
 
 		// Data buttons labels
-		gc.gridy = 4;
+		gc.gridy = 6;
 		gc.gridx = 1;
 		for (int x = 7; x >= 0; --x) {
 			lab = getLabel(String.format("%d", x));
@@ -214,28 +215,60 @@ public class ELFFrontPanel extends JPanel
 			add(lab);
 			++gc.gridx;
 		}
+		// Q LED
+		pan = getQLED();
+		gc.gridy = 1;
+		gc.gridx = 1;
+		gc.gridwidth = 8;
+		gb.setConstraints(pan, gc);
+		add(pan);
 
-		gc.gridy = 1;
-		gc.gridx = 4;
-		gc.gridheight = 3;
-		disp[0] = getDisplay();
-		gb.setConstraints(disp[0], gc);
-		add(disp[0]);
-		gc.gridy = 1;
-		gc.gridx = 5;
-		gc.gridheight = 3;
-		disp[1] = getDisplay();
-		gb.setConstraints(disp[1], gc);
-		add(disp[1]);
-		gc.gridy = 1;
-		gc.gridx = 3;
-		gc.gridheight = 3;
-		gb.setConstraints(qLed, gc);
-		add(qLed);
+		pan = getHexDisplay();
+		gc.gridy = 2;
+		gc.gridx = 1;
+		gc.gridwidth = 8;
+		gb.setConstraints(pan, gc);
+		add(pan);
 
+		// If ROM...
+		if (false) {
+			pan = getROMJumper();
+			gc.gridy = 2;
+			gc.gridx = 1;
+			gc.gridwidth = 8;
+			gb.setConstraints(pan, gc);
+			add(pan);
+		}
 		// Now safe to do this?
 		intr.setSwitch(RUN, btns[RUN].isSelected());
 		intr.setSwitch(LOAD, btns[LOAD].isSelected());
+	}
+
+	private JPanel getROMJumper() {
+		JPanel pan = new JPanel();
+		// ...
+		return pan;
+	}
+
+	private JPanel getQLED() {
+		JPanel pan = new JPanel();
+		pan.setBackground(phenolic);
+		pan.setOpaque(true);
+		pan.setPreferredSize(new Dimension(400, 20));
+		pan.add(qLed);
+		return pan;
+	}
+
+	private JPanel getHexDisplay() {
+		JPanel pan = new JPanel();
+		pan.setBackground(phenolic);
+		pan.setOpaque(true);
+		pan.setPreferredSize(new Dimension(400, 70));
+		disp[0] = getDisplay();
+		pan.add(disp[0]);
+		disp[1] = getDisplay();
+		pan.add(disp[1]);
+		return pan;
 	}
 
 	private JLabel getLabel(String txt) {
