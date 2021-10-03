@@ -199,6 +199,15 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 			cpu.setDMAout(false);
 		}
 	}
+	public synchronized void setSwitch(int sw, boolean on) {
+		if (sw == ELFFrontPanel.RUN) {
+			cpu.setCLEAR(!on);
+		} else if (sw == ELFFrontPanel.LOAD) {
+			cpu.setWAIT(on);
+		} else if (sw == ELFFrontPanel.IN) {
+			cpu.setEF(3, on);
+		}
+	}
 	public void blockInts(int msk) {
 		intMask |= msk;
 		if (false) {
@@ -414,6 +423,10 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 		} else {
 			dev.out(port, value);
 		}
+	}
+
+	public void setQ(boolean on) {
+		if (fp != null) fp.setQLed(on);
 	}
 
 	public int dmaIn() {

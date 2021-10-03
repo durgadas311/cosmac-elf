@@ -23,6 +23,10 @@ import javax.sound.sampled.*;
 
 public class ELFFrontPanel extends JPanel
 		implements IODevice, DMAController, MouseListener {
+	static final int LOAD = 8;	// index/id of LOAD switch
+	static final int MP = 9;	// index/id of MP switch
+	static final int RUN = 10;	// index/id of RUN switch
+	static final int IN = 12;	// index/id of IN switch
 	private Font tiny;
 	private Font lesstiny;
 	private Font til311;
@@ -36,6 +40,7 @@ public class ELFFrontPanel extends JPanel
 	JLabel[] disp;
 	GridBagLayout gb;
 	GridBagConstraints gc;
+	LED qLed;
 
 	public ELFFrontPanel(Properties props, Interruptor intr) {
 		super();
@@ -67,6 +72,7 @@ public class ELFFrontPanel extends JPanel
 		if (til311 == null) {
 			System.err.format("No TIL311\n");
 		}
+		qLed = new RoundLED(LED.Colors.RED);
 		in = new JButton();
 		in.setPreferredSize(new Dimension(50, 30));
 		in.addMouseListener(this);
@@ -147,21 +153,24 @@ public class ELFFrontPanel extends JPanel
 		// [LOAD] button
 		gc.gridy = 3;
 		gc.gridx = 2;
-		btns[8].setSelected(true);
-		gb.setConstraints(btns[8], gc);
-		add(btns[8]);
+		btns[LOAD].setSelected(true);
+		btns[LOAD].addMouseListener(this);
+		gb.setConstraints(btns[LOAD], gc);
+		add(btns[LOAD]);
 		// [MP] button
 		gc.gridy = 3;
 		gc.gridx = 7;
-		btns[9].setSelectedIcon(sw_r_on);
-		btns[9].setIcon(sw_r_off);
-		gb.setConstraints(btns[9], gc);
-		add(btns[9]);
+		btns[MP].setSelectedIcon(sw_r_on);
+		btns[MP].setIcon(sw_r_off);
+		btns[MP].addMouseListener(this); // not used
+		gb.setConstraints(btns[MP], gc);
+		add(btns[MP]);
 		// [RUN] button
 		gc.gridy = 3;
 		gc.gridx = 8;
-		gb.setConstraints(btns[10], gc);
-		add(btns[10]);
+		btns[RUN].addMouseListener(this);
+		gb.setConstraints(btns[RUN], gc);
+		add(btns[RUN]);
 		// DATA buttons
 		gc.gridy = 5;
 		gc.gridx = 1;
@@ -218,6 +227,15 @@ public class ELFFrontPanel extends JPanel
 		disp[1] = getDisplay();
 		gb.setConstraints(disp[1], gc);
 		add(disp[1]);
+		gc.gridy = 1;
+		gc.gridx = 3;
+		gc.gridheight = 3;
+		gb.setConstraints(qLed, gc);
+		add(qLed);
+
+		// Now safe to do this?
+		intr.setSwitch(RUN, btns[RUN].isSelected());
+		intr.setSwitch(LOAD, btns[LOAD].isSelected());
 	}
 
 	private JLabel getLabel(String txt) {
@@ -236,6 +254,11 @@ public class ELFFrontPanel extends JPanel
 		dsp.setOpaque(true);
 		dsp.setPreferredSize(new Dimension(25, 50));
 		return dsp;
+	}
+
+	public void setQLed(boolean on) {
+		qLed.set(on);
+		qLed.repaint();
 	}
 
 	public void setDisplay(int v) {
@@ -288,21 +311,32 @@ public class ELFFrontPanel extends JPanel
 	public void mouseEntered(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
 	public void mousePressed(MouseEvent e) {
+		// NOTE: JCheckBoxes have not changed state yet...
 		AbstractButton btn = (AbstractButton)e.getSource();
 		int mn = btn.getMnemonic();
 		mn &= 0xff;
 		switch (mn) {
-		case 8:		// LOAD
-			break;
-		case 9:		// MP (PROT)
-			break;
-		case 10:	// RUN
-			break;
-		case 12:	// IN (STORE)
-			input = true;
-			intr.raiseDMA_IN(src);
+		case IN:
+			if (btns[LOAD].isSelected()) {
+				input = true;
+				intr.raiseDMA_IN(src);
+			}
+			intr.setSwitch(IN, true);
 			break;
 		}
 	}
-	public void mouseReleased(MouseEvent e) {}
+	public void mouseReleased(MouseEvent e) {
+		AbstractButton btn = (AbstractButton)e.getSource();
+		int mn = btn.getMnemonic();
+		mn &= 0xff;
+		switch (mn) {
+		case LOAD:
+		case RUN:
+			intr.setSwitch(mn, btns[mn].isSelected());
+			break;
+		case IN:
+			intr.setSwitch(IN, false);
+			break;
+		}
+	}
 }

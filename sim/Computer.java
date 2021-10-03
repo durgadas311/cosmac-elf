@@ -8,6 +8,7 @@ public interface Computer {
 	// I/O access
 	int inPort(int port);
 	void outPort(int port, int value);
+	void setQ(boolean on);
 
 	// DMA
 	int dmaIn();

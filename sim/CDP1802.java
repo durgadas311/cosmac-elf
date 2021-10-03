@@ -20,7 +20,6 @@ public class CDP1802 {
 	private boolean idled = false;
 	private boolean clear = false;
 	private boolean wait = false;
-	private boolean pinReset = false;
 	private String spcl = "";
 
 	public CDP1802(Computer impl) {
@@ -138,10 +137,6 @@ public class CDP1802 {
 		idled = state;
 	}
 
-	public void setPinReset() {
-		pinReset = true;
-	}
-
 	public final boolean isPendingEI() {
 		return pendingEI;
 	}
@@ -164,9 +159,6 @@ public class CDP1802 {
 
 	// Reset
 	public final void reset() {
-		if (pinReset) {
-			pinReset = false;
-		}
 		Arrays.fill(regs, 0);
 		Arrays.fill(EF, false);
 		regD = 0;
@@ -174,7 +166,7 @@ public class CDP1802 {
 		regP = 0;
 		regN = 0;
 		DF = false;
-		Q = false;
+		changeQ(false);
 		ffIE = false;
 		// technically, these should come from the computer
 		activeDMAin = false;
@@ -227,6 +219,10 @@ public class CDP1802 {
 		v = computerImpl.peek8(regs[ix]) << 8;
 		v |= computerImpl.peek8(regs[ix] + 1);
 		return v;
+	}
+
+	private void changeQ(boolean on) {
+		computerImpl.setQ(on);
 	}
 
 	private int getR_0(int ix) {
@@ -296,6 +292,16 @@ public class CDP1802 {
 			return -ticks;
 		} else if (ffIE && activeINT) {
 			interruption();
+			return -ticks;
+		}
+
+		if (clear) {	// just like IDLE?
+			if (wait) {
+				spcl = "LOAD";
+			} else {
+				spcl = "RESET";
+			}
+			ticks += 8;
 			return -ticks;
 		}
 
@@ -583,10 +589,10 @@ public class CDP1802 {
 			regX = regP;
 			break;
 		case 0x7A:	// REQ
-			Q = false;
+			changeQ(false);
 			break;
 		case 0x7B:	// SEQ
-			Q = true;
+			changeQ(true);
 			break;
 		case 0x7C:	// ADCI
 			add(DF ? 1 : 0, regP);
