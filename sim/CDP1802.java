@@ -53,6 +53,10 @@ public class CDP1802 {
 		regP = value & 0x0f;
 	}
 
+	public final int getRegXX() {
+		return regs[regX];
+	}
+
 	public final int getRegPC() {
 		return regs[regP];
 	}

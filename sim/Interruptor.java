@@ -8,6 +8,7 @@ public interface Interruptor {
 	void lowerDMA_IN(int src);
 	void raiseDMA_OUT(int src);
 	void lowerDMA_OUT(int src);
+	void setEF(int src, int ef, boolean on);
 	void setSwitch(int sw, boolean on);
 	void blockInts(int mask);
 	void unblockInts(int mask);

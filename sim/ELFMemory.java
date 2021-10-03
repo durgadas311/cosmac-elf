@@ -31,7 +31,7 @@ public class ELFMemory extends ELFRoms implements Memory {
 		address &= mask;
 		if (rom && address < monSize) {
 			// read ROM instead
-			return mon[address];
+			return mon[address] & 0xff;
 		}
 		return mem[address] & 0xff;
 	}

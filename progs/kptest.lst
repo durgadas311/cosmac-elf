@@ -1,0 +1,27 @@
+                        ; Program to test Hex Keypad.
+                        ; Scan for key pressed, display value, wait for key release, repeat.
+                        ;
+   0020                 count	equ	32	; someplace beyond ROM
+                        
+   0000                 	org	0
+   0000                 start:
+   0000   e5            	sex	5	; use R5 for X
+   0001   f8 20         	ldi	count.0
+   0003   a5            	plo	5	; set R(X) = count
+   0004                 loop:
+   0004   62            	out	2	; N1 = index
+   0005   25            	dec	5	; correct for OUT
+   0006   3d 0c         	bn2	miss
+   0008   64            	out	4	; N2 = display
+   0009   25            	dec	5	; correct for OUT
+   000a   35 0a         wait:	b2	wait	; wait for key-up
+   000c   f8 01         miss:	ldi	1	; increment M(R(X))...
+   000e   f4            	add		; +1
+   000f   fa 0f         	ani	0fh	; keep it 0-15
+   0011   55            	str	5	; save in M(R(X))
+   0012   30 04         	br	loop	; keep going
+                        
+   0014                 	end
+0020  count         0004  loop          000c  miss          0000  start     
+000a  wait          
+

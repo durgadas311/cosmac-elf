@@ -29,6 +29,8 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	private int intLines;
 	private int dmaInLines;
 	private int dmaOutLines;
+	private int[] efLines;
+	private int efSrc;
 	private int intMask;
 	private Vector<ClockListener> clks;
 	private Vector<TimeListener> times;
@@ -57,6 +59,8 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		times = new Vector<TimeListener>();
 		intrs = new Vector<InterruptController>();
 		dmas = new Vector<DMAController>();
+		efLines = new int[4];
+		efSrc = registerINT();	// For IN button
 
 		cpu = new CDP1802(this);
 		mem = new ELFMemory(props);
@@ -64,6 +68,10 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 
 		addDevice(fp);
 		dmas.add(fp);
+
+		if (props.getProperty("hexkeypad") != null) {
+			addDevice(new HexKeyPad(props, this));
+		}
 
 		disas = new CDP1802Disassembler(mem);
 	}
@@ -192,13 +200,25 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 			cpu.setDMAout(false);
 		}
 	}
+	public synchronized void setEF(int src, int ef, boolean on) {
+		if (on) {
+			efLines[ef] |= (1 << src);
+			cpu.setEF(ef, on);
+		} else {
+			efLines[ef] &= ~(1 << src);
+			if (efLines[ef] == 0) {
+				cpu.setEF(ef, on);
+			}
+		}
+	}
+
 	public synchronized void setSwitch(int sw, boolean on) {
 		if (sw == ELFFrontPanel.RUN) {
 			cpu.setCLEAR(!on);
 		} else if (sw == ELFFrontPanel.LOAD) {
 			cpu.setWAIT(on);
 		} else if (sw == ELFFrontPanel.IN) {
-			cpu.setEF(3, on);
+			setEF(efSrc, 3, on);	// EF4
 		} else if (sw == ELFFrontPanel.PROM) {
 			mem.setROM(on);
 		}
@@ -459,13 +479,14 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 				}
 				if (trace) {
 					++traced;
+					int XX = cpu.getRegXX();
 					traceStr = String.format("{%05d} %04x: %02x %02x %02x %02x " +
-						": %02x %04x %04x %04x [%04x] <%02x/%02x>%s",
+						": %02x %04x %02x %04x <%02x/%02x>%s",
 						clock & 0xffff,
 						PC, mem.read(PC), mem.read(PC + 1),
 						mem.read(PC + 2), mem.read(PC + 3),
 						// TODO: which registers...
-						0,0,0,0,0,
+						cpu.getRegD(),XX,mem.read(XX),0,
 						intLines, intMask,
 						cpu.isINTLine() ? " INT" : "");
 				}
