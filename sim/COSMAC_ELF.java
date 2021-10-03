@@ -10,10 +10,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.Properties;
 import javax.swing.*;
 
-public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListener, Runnable {
+public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable {
 	private CDP1802 cpu;
 	private long clock;
-	private Map<Integer, IODevice> ios;
 	private Vector<IODevice> devs;
 	private Vector<InterruptController> intrs;
 	private Vector<DMAController> dmas;
@@ -53,7 +52,6 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 		stopped = true;
 		stopWait = new Semaphore(0);
 		cpuLock = new ReentrantLock();
-		ios = new HashMap<Integer, IODevice>();
 		devs = new Vector<IODevice>();
 		clks = new Vector<ClockListener>();
 		times = new Vector<TimeListener>();
@@ -64,9 +62,9 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 		mem = new ELFMemory(props);
 		fp = new ELFFrontPanel(props, this);
 
+		addDevice(fp);
 		dmas.add(fp);
 
-		//gpp.addGppListener(this);
 		disas = new CDP1802Disassembler(mem);
 	}
 
@@ -108,11 +106,6 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 		}
 		devs.add(dev);
 		return true;
-	}
-
-	public IODevice getDevice(int basePort) {
-		IODevice dev = ios.get(basePort);
-		return dev;
 	}
 
 	// These must NOT be called from the thread...
@@ -312,14 +305,14 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 				if (args[1].equalsIgnoreCase("mach")) {
 					ret.add(dumpDebug());
 				}
-				if (args[1].equalsIgnoreCase("disk") && args.length > 2) {
-					IODevice dev = findDevice(args[2]);
-					if (dev == null) {
-						err.add("nodevice");
-						err.add(args[2]);
-						return err;
+				return ret;
+			}
+			if (args[0].equalsIgnoreCase("getdevs")) {
+				for (IODevice dev : devs) {
+					String nm = dev.getDeviceName();
+					if (nm != null) {
+						ret.add(nm);
 					}
-					ret.add(dev.dumpDebug());
 				}
 				return ret;
 			}
@@ -383,12 +376,6 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 		nanoSecCycle = 1000000000 / spd;
 	}
 
-	////////////////////////////////////////////
-	/// GppListener interface implementation ///
-	public int interestedBits() { return 0; }
-	public void gppNewValue(int gpio) {
-	}
-
 	/////////////////////////////////////////
 	/// Computer interface implementation ///
 
@@ -406,22 +393,19 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 
 	public int inPort(int port) {
 		int val = 0;
-		port &= 0xff;
-		IODevice dev = ios.get(port);
-		if (dev == null) {
-			//System.err.format("Undefined Input on port %02x\n", port);
-		} else {
-			val = dev.in(port);
+		for (IODevice dev : devs) {
+			if ((port & dev.getMask()) == dev.getBaseAddress()) {
+				// last matching port wins...
+				val = dev.in(port);
+			}
 		}
 		return val;
 	}
 	public void outPort(int port, int value) {
-		port &= 0xff;
-		IODevice dev = ios.get(port);
-		if (dev == null) {
-			//System.err.format("Undefined Output on port %02x value %02x\n", port, value);
-		} else {
-			dev.out(port, value);
+		for (IODevice dev : devs) {
+			if ((port & dev.getMask()) == dev.getBaseAddress()) {
+				dev.out(port, value);
+			}
 		}
 	}
 

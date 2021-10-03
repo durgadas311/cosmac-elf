@@ -303,8 +303,8 @@ public class ELFFrontPanel extends JPanel
 	public void out(int port, int value) {
 		setDisplay(value);
 	}
-	public String getDeviceName() { return "ELF"; }
-	public String dumpDebug() { return ""; }
+	public String getDeviceName() { return "ELF-FP"; }
+	public String dumpDebug() { return "no debug data, yet"; }
 
 	// MouseListener
 	public void mouseClicked(MouseEvent e) {}

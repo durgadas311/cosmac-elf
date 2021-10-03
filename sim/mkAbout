@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cat <<EOF
+<HTML><CENTER>
+COS/MAC ELF Computer Simulator<BR>
+Build: $(date)<BR>
+<BR>
+<IMG SRC="COSMAC_ELF.png">
+<BR>
+Developed by Douglas Miller<BR>
+http://sims.durgadas.com/<BR>
+<BR>
+</CENTER></HTML>
+EOF

@@ -44,8 +44,8 @@ public class VirtualCOSMAC_ELF {
 		COSMAC_ELF elf = new COSMAC_ELF(props, null); // may add 'screen'...
 		front_end.add(elf.getFrontPanel());
 		// All LEDs should be registered now...
-//		ELFOperator op = new ELFOperator(front_end, props, screen, lh);
-//		op.setCommander(elf.getCommander());
+		ELFOperator op = new ELFOperator(front_end, props);
+		op.setCommander(elf.getCommander());
 
 		front_end.pack();
 		front_end.setVisible(true);

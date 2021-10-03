@@ -866,12 +866,20 @@ public class CDP1802 {
 
 	public String dumpDebug() {
 		String s = new String();
-		s += String.format("INT=%s IE=%s\n",
-				isINTLine(), isIE());
+		s += String.format("INT=%s IE=%s CLEAR=%s WAIT=%s\n",
+				isINTLine(), isIE(), clear, wait);
 		s += String.format("P=%d X=%d\n", regP, regX);
 		s += String.format("%04x %04x %04x %04x\n",
 			regs[0], regs[1], regs[2], regs[3]);
+		s += String.format("%04x %04x %04x %04x\n",
+			regs[4], regs[5], regs[6], regs[7]);
+		s += String.format("%04x %04x %04x %04x\n",
+			regs[8], regs[9], regs[10], regs[11]);
+		s += String.format("%04x %04x %04x %04x\n",
+			regs[12], regs[13], regs[14], regs[15]);
 		s += String.format("D=%02x DF=%s Q=%s\n", regD, DF, Q);
+		s += String.format("EF1=%s EF2=%s EF3=%s EF4=%s\n",
+			EF[0], EF[1], EF[2], EF[3]);
 		return s;
 	}
 }
