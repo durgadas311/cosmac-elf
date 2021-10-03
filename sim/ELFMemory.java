@@ -5,13 +5,13 @@ import java.util.Properties;
 import java.io.*;
 
 // TODO: extends ELFRoms...
-public class ELFMemory implements Memory {
+public class ELFMemory extends ELFRoms implements Memory {
 	private byte[] mem;
 	private int mask;
 	private boolean rom = false;
 
 	public ELFMemory(Properties props) {
-		//super(props, gpio, intr);
+		super(props);
 		int ramsize = 256;
 		String s = props.getProperty("ram");
 		if (s != null) {
@@ -23,13 +23,15 @@ public class ELFMemory implements Memory {
 		}
 		mem = new byte[ramsize];
 		mask = ramsize - 1;	// only works for powers of two
+		// RAM must be >= ROM size...
 		//Arrays.fill(mem, (byte)0x30);
 	}
 
 	public int read(boolean rom, int address) {
 		address &= mask;
-		if (rom && false) {
+		if (rom && address < monSize) {
 			// read ROM instead
+			return mon[address];
 		}
 		return mem[address] & 0xff;
 	}
@@ -38,7 +40,7 @@ public class ELFMemory implements Memory {
 	}
 	public void write(int address, int value) {
 		address &= mask;
-		if (rom && false) {
+		if (rom && address < monSize) {
 			// ROM - no write to RAM...
 			return;
 		}
@@ -46,6 +48,10 @@ public class ELFMemory implements Memory {
 	}
 
 	public void reset() {}
+
+	public void setROM(boolean ena) {
+		if (monSize > 0) rom = ena;
+	}
 
 	public void dumpCore(String file) {
 		try {

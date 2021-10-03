@@ -10,6 +10,9 @@ public class VirtualCOSMAC_ELF {
 	public static void main(String[] args) {
 		Properties props = new Properties();
 		String rc = System.getenv("COSMACELF_CFG");
+		if (args.length > 0) {
+			rc = args[0];
+		}
 		if (rc == null) {
 			File f = new File("./cosmac_elf.rc");
 			if (f.exists()) {

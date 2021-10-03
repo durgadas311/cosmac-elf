@@ -71,7 +71,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	public void reset() {
 		boolean wasRunning = running;
 		tracing = false;
-		traceCycles = 100;
+		traceCycles = 0;
 		traceLow = 0;
 		traceHigh = 0;
 		// TODO: reset other interrupt state? devices should do that...
@@ -199,6 +199,8 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 			cpu.setWAIT(on);
 		} else if (sw == ELFFrontPanel.IN) {
 			cpu.setEF(3, on);
+		} else if (sw == ELFFrontPanel.PROM) {
+			mem.setROM(on);
 		}
 	}
 	public void blockInts(int msk) {

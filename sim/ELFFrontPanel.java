@@ -29,6 +29,7 @@ public class ELFFrontPanel extends JPanel
 	static final int LOAD = 8;	// index/id of LOAD switch
 	static final int MP = 9;	// index/id of MP switch
 	static final int RUN = 10;	// index/id of RUN switch
+	static final int PROM = 11;	// index/id of PROM jumper
 	static final int IN = 12;	// index/id of IN switch
 	private Font tiny;
 	private Font lesstiny;
@@ -53,7 +54,7 @@ public class ELFFrontPanel extends JPanel
 		intr.addDMAController(this);
 		tiny = new Font("Sans-serif", Font.PLAIN, 8);
 		lesstiny = new Font("Sans-serif", Font.PLAIN, 10);
-		btns = new JCheckBox[11];
+		btns = new JCheckBox[12];
 		disp = new JLabel[2];
 		Border lb = BorderFactory.createBevelBorder(BevelBorder.RAISED);
 		Color bg = new Color(50, 50, 50);
@@ -231,9 +232,9 @@ public class ELFFrontPanel extends JPanel
 		add(pan);
 
 		// If ROM...
-		if (false) {
+		if (props.getProperty("prom") != null) {
 			pan = getROMJumper();
-			gc.gridy = 2;
+			gc.gridy = 3;
 			gc.gridx = 1;
 			gc.gridwidth = 8;
 			gb.setConstraints(pan, gc);
@@ -245,8 +246,27 @@ public class ELFFrontPanel extends JPanel
 	}
 
 	private JPanel getROMJumper() {
+		Icon jp_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/jp2_lr.png"));
+		Icon jp_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/jp_lr.png"));
+		btns[PROM] = new JCheckBox();
+		btns[PROM].setPreferredSize(new Dimension(25, 15));
+		btns[PROM].setHorizontalAlignment(SwingConstants.CENTER);
+		btns[PROM].setFocusable(false);
+		btns[PROM].setFocusPainted(false);
+		btns[PROM].setBorderPainted(false);
+		btns[PROM].setSelectedIcon(jp_on);
+		btns[PROM].setIcon(jp_off);
+		btns[PROM].setOpaque(false);
+		btns[PROM].setBackground(phenolic);
+		btns[PROM].setContentAreaFilled(false);
+		btns[PROM].setMnemonic(PROM + 0x1000);
+		btns[PROM].addMouseListener(this);
 		JPanel pan = new JPanel();
-		// ...
+		pan.setBackground(phenolic);
+		pan.setOpaque(true);
+		pan.setPreferredSize(new Dimension(400, 20));
+		pan.add(btns[PROM]);
+		pan.add(new JLabel("PROM"));
 		return pan;
 	}
 
@@ -367,6 +387,7 @@ public class ELFFrontPanel extends JPanel
 		switch (mn) {
 		case LOAD:
 		case RUN:
+		case PROM:
 			intr.setSwitch(mn, btns[mn].isSelected());
 			break;
 		case IN:
