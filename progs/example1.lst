@@ -1,0 +1,8 @@
+   0000                 	org	0
+   0000   7a            start:	req
+   0001   3f 00         loop:	bn4	start
+   0003   7b            	seq
+   0004   30 01         	br	loop
+   0006                 	end
+0001  loop          0000  start         
+

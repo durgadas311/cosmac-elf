@@ -1,0 +1,31 @@
+<HTML>
+<HEAD>
+<TITLE>COS/MAC ELF Example 1</TITLE>
+</HEAD>
+<BODY>
+<H3>COS/MAC ELF Example 1</H3>
+
+<P>This is the first example in the August 1976 Popular Electronics article.
+It monitors the IN button and makes the Q LED follow the current state of
+that switch.
+<P>The program logic is:
+<UL><PRE>START: REQ
+LOOP:  BN4 START
+       SEQ
+       BR  LOOP
+</PRE></UL>
+
+<P>To run this, create a config file (plain text) that contains this line:
+<UL><PRE>prom = example1.bin</PRE></UL>
+
+<P>Where "example1.bin" is the file in this repository under "progs/example1.bin".
+
+<P>Then invoke the simulator with the command:
+<UL><PRE>java -jar VirtualCOSMAC_ELF.jar &lt;config-file&gt;</PRE></UL>
+
+<P>Once the simulator starts, click the PROM jumper to set it "on", then
+switch off LOAD and switch on RUN. At this point, depressing the IN button
+should cause the Q LED to light, and releasing it should cause the LED to go dark.
+
+</BODY>
+</HTML>
