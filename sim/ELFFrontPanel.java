@@ -14,28 +14,37 @@ import javax.sound.sampled.*;
 // 0: +-------------------------------------------------+
 // 1: |                [DISP] [DISP]                    |
 // 2: |                                                 |
-// 3: | [IN] [LOAD]                       [MP]   [RUN]  |
+// 3: | <IN> [LOAD]                       [MP]   [RUN]  |
 // 4: |                                                 |
 // 5: | [7]  [6]   [5]   [4]   [3]   [2]   [1]   [0]    |
 // 6: +-------------------------------------------------+
+//
+// <..> = momentary switch
 
 public class ELFFrontPanel extends JPanel
-		implements DMAController, MouseListener {
+		implements IODevice, DMAController, MouseListener {
 	private Font tiny;
 	private Font lesstiny;
 	private Font til311;
 	private Color wdw = new Color(70, 0, 0);
+	private boolean input = false;
+	private Interruptor intr;
+	private int src;
 
-	JButton[] btns;
+	JCheckBox[] btns;
+	JButton in;
 	JLabel[] disp;
 	GridBagLayout gb;
 	GridBagConstraints gc;
 
-	public ELFFrontPanel(Properties props) {
+	public ELFFrontPanel(Properties props, Interruptor intr) {
 		super();
+		this.intr = intr;
+		src = intr.registerINT();
+		intr.addDMAController(this);
 		tiny = new Font("Sans-serif", Font.PLAIN, 8);
 		lesstiny = new Font("Sans-serif", Font.PLAIN, 10);
-		btns = new JButton[12];
+		btns = new JCheckBox[11];
 		disp = new JLabel[2];
 		Border lb = BorderFactory.createBevelBorder(BevelBorder.RAISED);
 		Color bg = new Color(50, 50, 50);
@@ -58,18 +67,31 @@ public class ELFFrontPanel extends JPanel
 		if (til311 == null) {
 			System.err.format("No TIL311\n");
 		}
+		in = new JButton();
+		in.setPreferredSize(new Dimension(50, 30));
+		in.addMouseListener(this);
+		in.setFocusable(false);
+		in.setFocusPainted(false);
+		in.setBorderPainted(false);
+		in.setPressedIcon(sw_r_on);
+		in.setIcon(sw_r_off);
+		in.setOpaque(false);
+		in.setBackground(bg);
+		in.setContentAreaFilled(false);
+		in.setMnemonic(0x100c);
 		// 0-7 are data bits, ...
-		for (int x = 0; x < 12; ++x) {
-			btns[x] = new JButton();
+		for (int x = 0; x < 11; ++x) {
+			btns[x] = new JCheckBox();
 			btns[x].setPreferredSize(new Dimension(50, 30));
+			btns[x].setHorizontalAlignment(SwingConstants.CENTER);
+			btns[x].setFocusable(false);
 			btns[x].setFocusPainted(false);
 			btns[x].setBorderPainted(false);
-			btns[x].setPressedIcon(sw_w_on);
+			btns[x].setSelectedIcon(sw_w_on);
 			btns[x].setIcon(sw_w_off);
 			btns[x].setOpaque(false);
 			btns[x].setBackground(bg);
 			btns[x].setContentAreaFilled(false);
-			btns[x].addMouseListener(this);
 			btns[x].setMnemonic(x + 0x1000);
 			//btns[x].setText(btx[x]);
 		}
@@ -120,33 +142,32 @@ public class ELFFrontPanel extends JPanel
 		// [IN] button
 		gc.gridy = 3;
 		gc.gridx = 1;
-		btns[8].setPressedIcon(sw_r_on);
-		btns[8].setIcon(sw_r_off);
-		gb.setConstraints(btns[8], gc);
-		add(btns[8]);
+		gb.setConstraints(in, gc);
+		add(in);
 		// [LOAD] button
 		gc.gridy = 3;
 		gc.gridx = 2;
-		gb.setConstraints(btns[9], gc);
-		add(btns[9]);
+		btns[8].setSelected(true);
+		gb.setConstraints(btns[8], gc);
+		add(btns[8]);
 		// [MP] button
 		gc.gridy = 3;
 		gc.gridx = 7;
-		btns[10].setPressedIcon(sw_r_on);
-		btns[10].setIcon(sw_r_off);
-		gb.setConstraints(btns[10], gc);
-		add(btns[10]);
+		btns[9].setSelectedIcon(sw_r_on);
+		btns[9].setIcon(sw_r_off);
+		gb.setConstraints(btns[9], gc);
+		add(btns[9]);
 		// [RUN] button
 		gc.gridy = 3;
 		gc.gridx = 8;
-		gb.setConstraints(btns[11], gc);
-		add(btns[11]);
+		gb.setConstraints(btns[10], gc);
+		add(btns[10]);
 		// DATA buttons
 		gc.gridy = 5;
 		gc.gridx = 1;
 		for (int x = 7; x >= 0; --x) {
 			if ((x & 3) == 0) {
-				btns[x].setPressedIcon(sw_r_on);
+				btns[x].setSelectedIcon(sw_r_on);
 				btns[x].setIcon(sw_r_off);
 			}
 			gb.setConstraints(btns[x], gc);
@@ -154,26 +175,22 @@ public class ELFFrontPanel extends JPanel
 			++gc.gridx;
 		}
 		// Button Labels
-		JLabel lab = new JLabel("IN");
-		lab.setForeground(Color.white);
+		JLabel lab = getLabel("IN");
 		gc.gridy = 2;
 		gc.gridx = 1;
 		gb.setConstraints(lab, gc);
 		add(lab);
-		lab = new JLabel("LOAD");
-		lab.setForeground(Color.white);
+		lab = getLabel("LOAD");
 		gc.gridy = 2;
 		gc.gridx = 2;
 		gb.setConstraints(lab, gc);
 		add(lab);
-		lab = new JLabel("MP");
-		lab.setForeground(Color.white);
+		lab = getLabel("MP");
 		gc.gridy = 2;
 		gc.gridx = 7;
 		gb.setConstraints(lab, gc);
 		add(lab);
-		lab = new JLabel("RUN");
-		lab.setForeground(Color.white);
+		lab = getLabel("RUN");
 		gc.gridy = 2;
 		gc.gridx = 8;
 		gb.setConstraints(lab, gc);
@@ -183,8 +200,7 @@ public class ELFFrontPanel extends JPanel
 		gc.gridy = 4;
 		gc.gridx = 1;
 		for (int x = 7; x >= 0; --x) {
-			lab = new JLabel(String.format("%d", x));
-			lab.setForeground(Color.white);
+			lab = getLabel(String.format("%d", x));
 			gb.setConstraints(lab, gc);
 			add(lab);
 			++gc.gridx;
@@ -204,13 +220,21 @@ public class ELFFrontPanel extends JPanel
 		add(disp[1]);
 	}
 
+	private JLabel getLabel(String txt) {
+		JLabel lab = new JLabel("<HTML><CENTER>" + txt + "</CENTER></HTML>");
+		lab.setPreferredSize(new Dimension(50, 20));
+		lab.setHorizontalAlignment(SwingConstants.CENTER);
+		lab.setForeground(Color.white);
+		return lab;
+	}
+
 	private JLabel getDisplay() {
 		JLabel dsp = new JLabel("@");
 		dsp.setFont(til311);
 		dsp.setForeground(Color.red);
 		dsp.setBackground(wdw);
 		dsp.setOpaque(true);
-		dsp.setPreferredSize(new Dimension(40, 50));
+		dsp.setPreferredSize(new Dimension(25, 50));
 		return dsp;
 	}
 
@@ -224,16 +248,61 @@ public class ELFFrontPanel extends JPanel
 		disp[1].repaint();
 	}
 
+	private int getData() {
+		int v = 0;
+		for (int x = 7; x >= 0; --x) {
+			v <<= 1;
+			if (btns[x].isSelected()) v |= 1;
+		}
+		return v;
+	}
+
+	public boolean getMP() { return btns[9].isSelected(); }
+	public boolean getLOAD() { return btns[8].isSelected(); }
+
 	// DMAController
-	public boolean isActive(boolean in) { return false; }
-	public int readDataBus() { return 0; }
-	public void writeDataBus(int val) {}
+	public boolean isActive(boolean in) {
+		return in && input;
+	}
+	public int readDataBus() {
+		input = false;
+		intr.lowerDMA_IN(src);
+		int val = getData();
+		return val;
+	}
+	public void writeDataBus(int val) { }
+
+	// IODevice
+	public void reset() {}
+	public int getBaseAddress() { return 0b100; } // N2 only
+	public int getMask() { return 0b100; } // N2 only
+	public int in(int port) { return 0; }
+	public void out(int port, int value) {
+		setDisplay(value);
+	}
+	public String getDeviceName() { return "ELF"; }
+	public String dumpDebug() { return ""; }
 
 	// MouseListener
 	public void mouseClicked(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
-	public void mousePressed(MouseEvent e) {}
+	public void mousePressed(MouseEvent e) {
+		AbstractButton btn = (AbstractButton)e.getSource();
+		int mn = btn.getMnemonic();
+		mn &= 0xff;
+		switch (mn) {
+		case 8:		// LOAD
+			break;
+		case 9:		// MP (PROT)
+			break;
+		case 10:	// RUN
+			break;
+		case 12:	// IN (STORE)
+			input = true;
+			intr.raiseDMA_IN(src);
+			break;
+		}
+	}
 	public void mouseReleased(MouseEvent e) {}
-
 }

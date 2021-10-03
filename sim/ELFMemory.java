@@ -1,5 +1,6 @@
 // Copyright (c) 2021 Douglas Miller <durgadas311@gmail.com>
 
+import java.util.Arrays;
 import java.util.Properties;
 import java.io.*;
 
@@ -21,6 +22,7 @@ public class ELFMemory implements Memory {
 		bot = 0;
 		top = 1024;
 		mem = new byte[top];
+		//Arrays.fill(mem, (byte)0x30);
 	}
 
 	public int read(boolean rom, int address) {

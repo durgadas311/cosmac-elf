@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Douglas Miller <durgadas311@gmail.com>
+// Copyright (c) 2021 Douglas Miller <durgadas311@gmail.com>
 
 public interface IODevice {
 	void reset();

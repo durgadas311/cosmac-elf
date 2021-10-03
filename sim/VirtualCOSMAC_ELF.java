@@ -50,13 +50,7 @@ public class VirtualCOSMAC_ELF {
 		front_end.pack();
 		front_end.setVisible(true);
 
+		elf.reset();
 		elf.start(); // spawns its own thread... returns immediately
-
-		for (int x = 0; x < 256; ++x) {
-			elf.getFrontPanel().setDisplay(x);
-			try {
-				Thread.sleep(1000);
-			} catch(Exception ee) {}
-		}
 	}
 }

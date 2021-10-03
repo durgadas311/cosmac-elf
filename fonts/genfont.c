@@ -15,7 +15,7 @@ double skew = 0.0; // 2.0 / 23.0;
 //double gap = 56.88;
 //double org_x = 337.2;
 //double org_y = 167.48;
-double wid = 2040;
+double wid = 1408;
 double hei = 2048.0;
 double dotx = 128.0;
 /*

@@ -26,9 +26,10 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 	private int traceCycles;
 	private int traceLow;
 	private int traceHigh;
-	private int[] intRegistry;
-	private int[] intLines;
-	private int intState;
+	private int intRegistry;
+	private int intLines;
+	private int dmaInLines;
+	private int dmaOutLines;
 	private int intMask;
 	private Vector<ClockListener> clks;
 	private Vector<TimeListener> times;
@@ -45,17 +46,15 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 
 	public COSMAC_ELF(Properties props, String lh) {
 		String s;
-		intRegistry = new int[8];
-		intLines = new int[8];
-		Arrays.fill(intRegistry, 0);
-		Arrays.fill(intLines, 0);
-		intState = 0;
 		intMask = 0;
+		intRegistry = 0;
+		intLines = 0;
 		running = false;
 		stopped = true;
 		stopWait = new Semaphore(0);
 		cpuLock = new ReentrantLock();
 		ios = new HashMap<Integer, IODevice>();
+		devs = new Vector<IODevice>();
 		clks = new Vector<ClockListener>();
 		times = new Vector<TimeListener>();
 		intrs = new Vector<InterruptController>();
@@ -63,7 +62,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 
 		cpu = new CDP1802(this);
 		mem = new ELFMemory(props);
-		fp = new ELFFrontPanel(props);
+		fp = new ELFFrontPanel(props, this);
 
 		dmas.add(fp);
 
@@ -74,7 +73,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 	public void reset() {
 		boolean wasRunning = running;
 		tracing = false;
-		traceCycles = 0;
+		traceCycles = 100;
 		traceLow = 0;
 		traceHigh = 0;
 		// TODO: reset other interrupt state? devices should do that...
@@ -159,38 +158,56 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 
 	/////////////////////////////////////////////
 	/// Interruptor interface implementation ///
-	public int registerINT(int irq) {
-		int val = intRegistry[irq & 7]++;
+	public int registerINT() {
+		int val = intRegistry++;
 		// TODO: check for overflow (32 bits max?)
 		return val;
 	}
-	public synchronized void raiseINT(int irq, int src) {
-		irq &= 7;
-		intLines[irq] |= (1 << src);
-		intState |= (1 << irq);
-		if ((intState & ~intMask) != 0) {
+	public synchronized void raiseINT(int src) {
+		intLines |= (1 << src);
+		if (intLines != 0) {
 			cpu.setINTLine(true);
 		}
 	}
-	public synchronized void lowerINT(int irq, int src) {
-		irq &= 7;
-		intLines[irq] &= ~(1 << src);
-		if (intLines[irq] == 0) {
-			intState &= ~(1 << irq);
-			if ((intState & ~intMask) == 0) {
-				cpu.setINTLine(false);
-			}
+	public synchronized void lowerINT(int src) {
+		intLines &= ~(1 << src);
+		if (intLines == 0) {
+			cpu.setINTLine(false);
+		}
+	}
+	public synchronized void raiseDMA_IN(int src) {
+		dmaInLines |= (1 << src);
+		if (dmaInLines != 0) {
+			cpu.setDMAin(true);
+		}
+	}
+	public synchronized void lowerDMA_IN(int src) {
+		dmaInLines &= ~(1 << src);
+		if (dmaInLines == 0) {
+			cpu.setDMAin(false);
+		}
+	}
+	public synchronized void raiseDMA_OUT(int src) {
+		dmaOutLines |= (1 << src);
+		if (dmaOutLines != 0) {
+			cpu.setDMAout(true);
+		}
+	}
+	public synchronized void lowerDMA_OUT(int src) {
+		dmaOutLines &= ~(1 << src);
+		if (dmaOutLines == 0) {
+			cpu.setDMAout(false);
 		}
 	}
 	public void blockInts(int msk) {
 		intMask |= msk;
-		if ((intState & ~intMask) == 0) {
+		if (false) {
 			cpu.setINTLine(false);
 		}
 	}
 	public void unblockInts(int msk) {
 		intMask &= ~msk;
-		if ((intState & ~intMask) != 0) {
+		if (false) {
 			cpu.setINTLine(true);
 		}
 	}
@@ -371,7 +388,11 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 		return val;
 	}
 	public void poke8(int address, int value) {
-		mem.write(address, value);
+		// TODO: how much of a cheat is this?
+		if (!fp.getMP()) mem.write(address, value);
+		if (fp.getLOAD()) {
+			fp.setDisplay(mem.read(address));
+		}
 	}
 
 	public int inPort(int port) {
@@ -396,9 +417,20 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 	}
 
 	public int dmaIn() {
+		for (DMAController ctrl : dmas) {
+			if (ctrl.isActive(true)) {
+				return ctrl.readDataBus();
+			}
+		}
 		return 0;
 	}
 	public void dmaOut(int val) {
+		for (DMAController ctrl : dmas) {
+			if (ctrl.isActive(false)) {
+				ctrl.writeDataBus(val);
+				return;
+			}
+		}
 	}
 
 	public boolean intEnabled() {
@@ -435,7 +467,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 						mem.read(PC + 2), mem.read(PC + 3),
 						// TODO: which registers...
 						0,0,0,0,0,
-						intState, intMask,
+						intLines, intMask,
 						cpu.isINTLine() ? " INT" : "");
 				}
 				clk = cpu.execute();
@@ -572,11 +604,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, GppListe
 		}
 		ret += "\n";
 		ret += String.format("2mS Backlog = %d nS\n", backlogNs);
-		ret += "INT = {";
-		for (int x = 0; x < 8; ++x) {
-			ret += String.format(" %x", intLines[x]);
-		}
-		ret += String.format(" } %02x %02x\n", intState, intMask);
+		ret += String.format("INT = { %02x %02x }\n", intLines, intMask);
 		return ret;
 	}
 }

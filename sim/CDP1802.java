@@ -18,6 +18,8 @@ public class CDP1802 {
 	private boolean activeDMAout = false;
 	private boolean activeINT = false;
 	private boolean idled = false;
+	private boolean clear = false;
+	private boolean wait = false;
 	private boolean pinReset = false;
 	private String spcl = "";
 
@@ -100,6 +102,32 @@ public class CDP1802 {
 
 	public final void setINTLine(boolean intLine) {
 		activeINT = intLine;
+	}
+
+	public final void setCLEAR(boolean state) {
+		changeState(state, wait);
+	}
+
+	public final void setWAIT(boolean state) {
+		changeState(clear, state);
+	}
+
+	public void changeState(boolean clr, boolean wt) {
+		boolean chg = false;
+		if (clr != clear) {
+			chg = true;
+			clear = clr;
+			if (clear) {
+				reset();
+			}
+		}
+		if (wt != wait) {
+			chg = true;
+			wait = wt;
+		}
+		if (chg) {
+			// TODO...
+		}
 	}
 
 	public final boolean isIdled() {
