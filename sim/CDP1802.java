@@ -116,16 +116,15 @@ public class CDP1802 {
 		if (clr != clear) {
 			chg = true;
 			clear = clr;
-			if (clear) {
-				reset();
-			}
 		}
 		if (wt != wait) {
 			chg = true;
 			wait = wt;
 		}
 		if (chg) {
-			// TODO...
+			if (clear && !wait) {
+				reset();
+			}
 		}
 	}
 

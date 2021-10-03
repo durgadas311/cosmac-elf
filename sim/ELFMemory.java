@@ -7,28 +7,29 @@ import java.io.*;
 // TODO: extends ELFRoms...
 public class ELFMemory implements Memory {
 	private byte[] mem;
-	private int top;
-	private int bot;
-	private boolean rom;
+	private int mask;
+	private boolean rom = false;
 
 	public ELFMemory(Properties props) {
-		//super(props, gpio, intr);	// cannot be ROMX
-//		int memsiz = 4096 * high;
-//		if (memsiz <= 0) {
-//			memsiz = 4096;
-//		}
-//		bot = 4096 * low;
-//		top = memsiz;
-		bot = 0;
-		top = 1024;
-		mem = new byte[top];
+		//super(props, gpio, intr);
+		int ramsize = 256;
+		String s = props.getProperty("ram");
+		if (s != null) {
+			// TODO: parse "1K" etc.
+			ramsize = Integer.valueOf(s);
+			if ((ramsize & (ramsize - 1)) != 0) {
+				System.err.format("RAM size is not power-of-two\n");
+			}
+		}
+		mem = new byte[ramsize];
+		mask = ramsize - 1;	// only works for powers of two
 		//Arrays.fill(mem, (byte)0x30);
 	}
 
 	public int read(boolean rom, int address) {
-		address &= 0xffff; // necessary?
-		if (address >= top || address < bot) {
-			return 0;
+		address &= mask;
+		if (rom && false) {
+			// read ROM instead
 		}
 		return mem[address] & 0xff;
 	}
@@ -36,8 +37,9 @@ public class ELFMemory implements Memory {
 		return read(rom, address);
 	}
 	public void write(int address, int value) {
-		address &= 0xffff; // necessary?
-		if (address >= top || address < bot) {
+		address &= mask;
+		if (rom && false) {
+			// ROM - no write to RAM...
 			return;
 		}
 		mem[address] = (byte)value;

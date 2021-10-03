@@ -299,7 +299,9 @@ public class ELFFrontPanel extends JPanel
 	public void reset() {}
 	public int getBaseAddress() { return 0b100; } // N2 only
 	public int getMask() { return 0b100; } // N2 only
-	public int in(int port) { return 0; }
+	public int in(int port) {
+		return getData();
+	}
 	public void out(int port, int value) {
 		setDisplay(value);
 	}
