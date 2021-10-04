@@ -521,26 +521,28 @@ public class CDP1802 {
 		case 0x60:	// IRX
 			incr(regX);
 			break;
-		case 0x61:	// OUT1...
+		case 0x61:	// OUT 1...
 		case 0x62:
 		case 0x63:
 		case 0x64:
 		case 0x65:
 		case 0x66:
 		case 0x67:
+			// *does* increment R(X)
 			regN = T & 0x07;
 			computerImpl.outPort(regN, peek8i(regX));
 			break;
 		case 0x68:
 			// TODO: anything?
 			break;
-		case 0x69:	// OUT1...
+		case 0x69:	// INP 1...
 		case 0x6a:
 		case 0x6b:
 		case 0x6c:
 		case 0x6d:
 		case 0x6e:
 		case 0x6f:
+			// *does not* increment R(X)
 			regN = T & 0x07;
 			regD = computerImpl.inPort(regN);
 			poke8(regX, regD);
