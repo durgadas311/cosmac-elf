@@ -26,13 +26,15 @@ public class HexKeyPad extends JFrame
 		this.intr = intr;
 		src = intr.registerINT();
 		btns = new JButton[16];
-		Color bg = new Color(50, 50, 50);
+		Color bg = new Color(0,0,0);
+		Color ky = new Color(240,240,220);
+		Color tx = new Color(0,0,0);
 		Border lb = BorderFactory.createBevelBorder(BevelBorder.RAISED);
 		for (int x = 0; x < 16; ++x) {
 			btns[x] = new JButton();
 			btns[x].setPreferredSize(new Dimension(50, 50));
-			btns[x].setBackground(bg);
-			btns[x].setForeground(Color.white);
+			btns[x].setBackground(ky);
+			btns[x].setForeground(tx);
 			btns[x].setBorder(lb);
 			btns[x].setFocusPainted(false);
 			btns[x].setPressedIcon(null);
@@ -40,6 +42,7 @@ public class HexKeyPad extends JFrame
 			btns[x].setMnemonic(x + 0x1000);
 			btns[x].setText(String.format("%X", x));
 		}
+		getContentPane().setBackground(bg);
 		gb = new GridBagLayout();
 		setLayout(gb);
 		gc = new GridBagConstraints();
@@ -52,6 +55,15 @@ public class HexKeyPad extends JFrame
 		gc.gridheight = 1;
 		gc.anchor = GridBagConstraints.CENTER;
 
+		JPanel pan = new JPanel();
+		pan.setPreferredSize(new Dimension(20, 20));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
+		++gc.gridx;
+		++gc.gridy;
+
+		int ret = gc.gridx;
 		gb.setConstraints(btns[12], gc);
 		add(btns[12]);
 		++gc.gridx;
@@ -63,7 +75,7 @@ public class HexKeyPad extends JFrame
 		++gc.gridx;
 		gb.setConstraints(btns[15], gc);
 		add(btns[15]);
-		gc.gridx = 0;
+		gc.gridx = ret;
 		++gc.gridy;
 		gb.setConstraints(btns[8], gc);
 		add(btns[8]);
@@ -76,7 +88,7 @@ public class HexKeyPad extends JFrame
 		++gc.gridx;
 		gb.setConstraints(btns[11], gc);
 		add(btns[11]);
-		gc.gridx = 0;
+		gc.gridx = ret;
 		++gc.gridy;
 		gb.setConstraints(btns[4], gc);
 		add(btns[4]);
@@ -89,7 +101,7 @@ public class HexKeyPad extends JFrame
 		++gc.gridx;
 		gb.setConstraints(btns[7], gc);
 		add(btns[7]);
-		gc.gridx = 0;
+		gc.gridx = ret;
 		++gc.gridy;
 		gb.setConstraints(btns[0], gc);
 		add(btns[0]);
@@ -102,6 +114,14 @@ public class HexKeyPad extends JFrame
 		++gc.gridx;
 		gb.setConstraints(btns[3], gc);
 		add(btns[3]);
+		++gc.gridx;
+		++gc.gridy;
+
+		pan = new JPanel();
+		pan.setPreferredSize(new Dimension(20, 20));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
 
 		pack();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
