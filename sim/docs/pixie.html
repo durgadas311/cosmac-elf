@@ -1,0 +1,34 @@
+<HTML>
+<HEAD>
+<TITLE>COS/MAC ELF Pixie Graphics</TITLE>
+</HEAD>
+<BODY>
+<H3>COS/MAC ELF Pixie Graphics</H3>
+
+<P>This program is a simple demo for the "Pixie" graphics add-on,
+using the CDP1861 video generator chip
+(as described in Popular Electronics).
+
+<P>To run this, create a config file (plain text) that contains these lines:
+<UL><PRE>pixie
+prom = pixie1.bin</PRE></UL>
+
+<P>Where "pixie1.bin" is the file in this repository under "progs/pixie1.bin".
+
+<P>Then invoke the simulator with the command:
+<UL><PRE>java -jar VirtualCOSMAC_ELF.jar &lt;config-file&gt;</PRE></UL>
+
+<P>NOTE: This program is not able to run from ROM, especially on a 256-byte
+RAM system. It will be necessary to transfer the ROM image into RAM.
+Fortunately, the simulator provides a command to do that.
+
+<P>Once the simulator starts, select the "Copy ROM to RAM" item in the "Debug" menu.
+The switch off LOAD and switch on RUN. At this point,
+an image should appear on the Pixie screen.
+
+<P>NOTE: the simulator video timing is currently not close enough to original hardware
+in order to be able to run 64x32 or 64x64 mode, which requires precise synchronization
+between the CPU and the video chip.
+
+</BODY>
+</HTML>

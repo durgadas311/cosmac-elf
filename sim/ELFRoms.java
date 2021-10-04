@@ -15,19 +15,16 @@ public class ELFRoms {
 		if (s != null) {
 			try {
 				InputStream fi = new FileInputStream(s);
-				monSize = fi.available();
-				if (monMask <= 32) {
-					monSize = 32;
-				} else if (monMask <= 256) {
-					monSize = 256;
-				} else {
-					System.err.format("ROM size unexpected\n");
-				}
+				monSize = fi.available() & 0xffff;
+				int x = 32;
+				while (x < monSize) x <<= 1;
+				monSize = x;
 				monMask = monSize - 1;
 				mon = new byte[monSize];
 				fi.read(mon);
 				fi.close();
-				//System.err.format("PROM loaded %d bytes\n", monSize);
+				System.err.format("PROM loaded %d bytes from %s\n",
+						monSize, s);
 			} catch (Exception ee) {
 				ee.printStackTrace();
 				System.exit(1);

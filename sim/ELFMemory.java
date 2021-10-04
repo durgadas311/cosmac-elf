@@ -53,6 +53,12 @@ public class ELFMemory extends ELFRoms implements Memory {
 		if (monSize > 0) rom = ena;
 	}
 
+	public void copy() {
+		if (monSize > 0) {
+			System.arraycopy(mon, 0, mem, 0, monSize);
+		}
+	}
+
 	public void dumpCore(String file) {
 		try {
 			OutputStream core = new FileOutputStream(file);

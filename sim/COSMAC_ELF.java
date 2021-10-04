@@ -35,7 +35,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	private Vector<ClockListener> clks;
 	private Vector<TimeListener> times;
 	private	int cpuSpeed = 2000000;
-	private int cpuCycle2ms = 4096;
+	private int cpuCycle2ms = 4000;
 	private int nanoSecCycle = 500;
 	private CDP1802Disassembler disas;
 	private ReentrantLock cpuLock;
@@ -62,6 +62,29 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		efLines = new int[4];
 		efSrc = registerINT();	// For IN button
 
+		// Do this early, so we can log messages appropriately.
+		s = props.getProperty("log");
+		if (s != null) {
+			String[] args = s.split("\\s");
+			boolean append = false;
+			for (int x = 1; x < args.length; ++x) {
+				if (args[x].equals("a")) {
+					append = true;
+				}
+			}
+			try {
+				FileOutputStream fo = new FileOutputStream(args[0], append);
+				PrintStream ps = new PrintStream(fo, true);
+				System.setErr(ps);
+			} catch (Exception ee) {}
+		}
+		s = props.getProperty("configuration");
+		if (s == null) {
+			System.err.format("No config file found\n");
+		} else {
+			System.err.format("Using configuration from %s\n", s);
+		}
+
 		cpu = new CDP1802(this);
 		mem = new ELFMemory(props);
 		fp = new ELFFrontPanel(props, this);
@@ -71,6 +94,11 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 
 		if (props.getProperty("hexkeypad") != null) {
 			addDevice(new HexKeyPad(props, this));
+		}
+		if (props.getProperty("pixie") != null) {
+			PixieCrt crt = new PixieCrt(props, this);
+			addDevice(crt);
+			dmas.add(crt);
 		}
 
 		disas = new CDP1802Disassembler(mem);
@@ -215,8 +243,14 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	public synchronized void setSwitch(int sw, boolean on) {
 		if (sw == ELFFrontPanel.RUN) {
 			cpu.setCLEAR(!on);
+			if (cpu.getState() == CDP1802.State.RESET) {
+				reset();
+			}
 		} else if (sw == ELFFrontPanel.LOAD) {
 			cpu.setWAIT(on);
+			if (cpu.getState() == CDP1802.State.RESET) {
+				reset();
+			}
 		} else if (sw == ELFFrontPanel.IN) {
 			setEF(efSrc, 3, on);	// EF4
 		} else if (sw == ELFFrontPanel.PROM) {
@@ -327,6 +361,21 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 				if (args[1].equalsIgnoreCase("mach")) {
 					ret.add(dumpDebug());
 				}
+				if (args[1].equalsIgnoreCase("dev") && args.length > 2) {
+					IODevice dev = findDevice(args[2]);
+					if (dev == null) {
+						err.add("nodevice");
+						err.add(args[2]);
+						return err;
+					}
+					ret.add(dev.dumpDebug());
+				}
+				return ret;
+			}
+			if (args[0].equalsIgnoreCase("copy") && args.length > 1) {
+				// for now, assume all are "ROM to RAM"...
+				mem.copy();
+				ret.add("ROM transferred to RAM");
 				return ret;
 			}
 			if (args[0].equalsIgnoreCase("getdevs")) {
@@ -486,7 +535,8 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 						PC, mem.read(PC), mem.read(PC + 1),
 						mem.read(PC + 2), mem.read(PC + 3),
 						// TODO: which registers...
-						cpu.getRegD(),XX,mem.read(XX),0,
+						cpu.getRegD(),XX,mem.read(XX),
+						cpu.getReg(0),
 						intLines, intMask,
 						cpu.isINTLine() ? " INT" : "");
 				}

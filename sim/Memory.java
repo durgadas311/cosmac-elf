@@ -6,5 +6,6 @@ public interface Memory {
 	void write(int address, int value);
 	void reset();
 	void setROM(boolean ena);
+	void copy();
 	void dumpCore(String file);
 }

@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 public class CDP1802 {
 
+	public enum State { LOAD, RESET, PAUSE, RUN };
+
 	private final Computer computerImpl;
 	private int ticks;
 	private int opCode;
@@ -51,6 +53,10 @@ public class CDP1802 {
 
 	public final void setRegP(int value) {
 		regP = value & 0x0f;
+	}
+
+	public final int getReg(int ix) {
+		return regs[ix & 0x0f];
 	}
 
 	public final int getRegXX() {
@@ -115,6 +121,16 @@ public class CDP1802 {
 		changeState(clear, state);
 	}
 
+	public State getState() {
+		if (clear) {
+			if (wait) return State.LOAD;
+			else return State.RESET;
+		} else {
+			if (wait) return State.PAUSE;
+			else return State.RUN;
+		}
+	}
+
 	public void changeState(boolean clr, boolean wt) {
 		boolean chg = false;
 		if (clr != clear) {
@@ -170,7 +186,7 @@ public class CDP1802 {
 		regN = 0;
 		DF = false;
 		changeQ(false);
-		ffIE = false;
+		ffIE = true;	// TODO: timing issues?
 		// technically, these should come from the computer
 		activeDMAin = false;
 		activeDMAout = false;

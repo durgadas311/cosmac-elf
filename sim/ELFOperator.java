@@ -28,6 +28,7 @@ public class ELFOperator implements ActionListener, Runnable
 	File _last_core;
 	int _page_key;
 	int _dasm_key;
+	int _copy_key;
 	int _quit_key;
 	int _rf_key;
 	int _key;
@@ -124,6 +125,12 @@ public class ELFOperator implements ActionListener, Runnable
 		mi = new JMenuItem("Disassemble", _dasm_key);
 		mi.addActionListener(this);
 		_sys_mu.add(mi);
+		if (props.getProperty("prom") != null) {
+			_copy_key = _key++;
+			mi = new JMenuItem("Copy ROM to RAM", _copy_key);
+			mi.addActionListener(this);
+			_sys_mu.add(mi);
+		}
 		// More added when computer connected
 		_mb.add(_sys_mu);
 
@@ -512,9 +519,18 @@ public class ELFOperator implements ActionListener, Runnable
 				doDisasDialog();
 				continue;
 			}
+			if (key == _copy_key) {
+				Vector<String> r = _cmdr.sendCommand("copy rom");
+				if (!r.get(0).equals("ok")) {
+					error(_main, "Copy ROM", join(r));
+				} else {
+					handleResp("Copy ROM", r);
+				}
+				continue;
+			}
 			if (_devs.containsKey(key)) {
 				String dev = _devs.get(key);
-				Vector<String> r = _cmdr.sendCommand("dump disk " + dev);
+				Vector<String> r = _cmdr.sendCommand("dump dev " + dev);
 				if (!r.get(0).equals("ok")) {
 					error(_main, dev + " Debug", join(r));
 				} else {
