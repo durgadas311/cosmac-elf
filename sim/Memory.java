@@ -7,5 +7,6 @@ public interface Memory {
 	void reset();
 	void setROM(boolean ena);
 	void copy();
+	void load(String file, int adr);
 	void dumpCore(String file);
 }

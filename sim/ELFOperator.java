@@ -25,6 +25,7 @@ public class ELFOperator implements ActionListener, Runnable
 	int _cpu_key;
 	int _mach_key;
 	int _core_key;
+	int _load_key;
 	File _last_core;
 	int _page_key;
 	int _dasm_key;
@@ -115,6 +116,10 @@ public class ELFOperator implements ActionListener, Runnable
 		_last_core = new File(".");
 		_core_key = _key++;
 		mi = new JMenuItem("Dump Core", _core_key);
+		mi.addActionListener(this);
+		_sys_mu.add(mi);
+		_load_key = _key++;
+		mi = new JMenuItem("Load Prog", _load_key);
 		mi.addActionListener(this);
 		_sys_mu.add(mi);
 		_page_key = _key++;
@@ -290,6 +295,25 @@ public class ELFOperator implements ActionListener, Runnable
 		} else {
 			inform(_main, title, respToString(resp, 1, true));
 			_main.requestFocus();
+		}
+	}
+
+	private void doLoadDialog() {
+		SuffFileChooser ch = new SuffFileChooser("Load Prog",
+			new String[]{ "bin",		"cdp1802" },
+			new String[]{ "CDP1802 binary", "CDP1802 Core Dump" },
+			null, null, _last_core, true);
+		int rv = ch.showDialog(_main);
+		_main.requestFocus();
+		if (rv != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		_last_core = ch.getSelectedFile();
+		String core = _last_core.getAbsolutePath();
+		String cmd = "load core " + core;
+		Vector<String> resp = _cmdr.sendCommand(cmd);
+		if (!resp.get(0).equals("ok")) {
+			error(_main, cmd, join(resp));
 		}
 	}
 
@@ -509,6 +533,10 @@ public class ELFOperator implements ActionListener, Runnable
 			}
 			if (key == _core_key) {
 				doDumpCoreDialog();
+				continue;
+			}
+			if (key == _load_key) {
+				doLoadDialog();
 				continue;
 			}
 			if (key == _page_key) {

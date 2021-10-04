@@ -59,14 +59,23 @@ public class ELFMemory extends ELFRoms implements Memory {
 		}
 	}
 
+	public void load(String file, int adr) {
+		try {
+			InputStream core = new FileInputStream(file);
+			core.read(mem, adr, mem.length - adr);
+			core.close();
+		} catch (Exception ee) {
+			ELFOperator.error(null, "Load Prog", ee.getMessage());
+		}
+	}
+
 	public void dumpCore(String file) {
 		try {
 			OutputStream core = new FileOutputStream(file);
 			core.write(mem);
 			core.close();
 		} catch (Exception ee) {
-			//ELFOperator.error(null, "Core Dump", ee.getMessage());
-			ee.printStackTrace();
+			ELFOperator.error(null, "Core Dump", ee.getMessage());
 		}
 	}
 }
