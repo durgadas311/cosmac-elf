@@ -910,7 +910,9 @@ public class CDP1802 {
 	public String dumpDebug() {
 		String s = new String();
 		s += String.format("INT=%s IE=%s CLEAR=%s WAIT=%s\n",
-				isINTLine(), isIE(), clear, wait);
+				activeINT, isIE(), clear, wait);
+		s += String.format("DMA-IN=%s DMA-OUT=%s\n",
+				activeDMAin, activeDMAout);
 		s += String.format("P=%d X=%d\n", regP, regX);
 		s += String.format("%04x %04x %04x %04x\n",
 			regs[0], regs[1], regs[2], regs[3]);
