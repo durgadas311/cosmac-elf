@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.util.concurrent.Semaphore;
 
 public class PixieCrt extends JPanel
-		implements IODevice, DMAController, ClockListener, Runnable {
+		implements IODevice, DMAController, ClockListener {
 	static final int _sw = 320;	// screen width
 	static final int _sh = 240;	// screen height
 	private boolean enabled;
@@ -30,15 +30,15 @@ public class PixieCrt extends JPanel
 	private int _h1;	// first horiz line
 	private int _p1;	// horiz offset
 	private boolean test;
-	private Semaphore sem;
 	private int time = 0;
+	private enum State { BLANKING, EFX1, INT, DMA, GAP, EFX2 };
+	private State state = State.BLANKING;
 
 	public PixieCrt(Properties props, Interruptor intr) {
 		super();
 		this.intr = intr;
 		src = intr.registerINT();
 		intr.addClockListener(this);
-		sem = new Semaphore(0);
 		phosphor = new Color(0, 255, 0);
 		String s = props.getProperty("pixie_color");
 		if (s != null) {
@@ -77,8 +77,6 @@ public class PixieCrt extends JPanel
 			enabled = true;
 			repaint();
 		}
-		Thread t = new Thread(this);
-		t.start();
 	}
 
 	public void reset() {
@@ -87,6 +85,8 @@ public class PixieCrt extends JPanel
 		intr.lowerINT(src);
 		intr.setEF(src, 0, false);
 		enabled = false;
+		time = 0;
+		state = State.BLANKING;
 		dma = false;
 		efx = false;
 		intn = false;
@@ -100,13 +100,16 @@ public class PixieCrt extends JPanel
 
 	public int in(int port) {
 		enabled = true;
+		state = State.BLANKING;
+		time = 64;	// a little delay
 		return 0;
 	}
 
 	public void out(int port, int value) {
 		// data ignored
 		enabled = true;
-		repaint();
+		state = State.BLANKING;
+		time = 64;	// a little delay
 	}
 
 	public String getDeviceName() {
@@ -117,7 +120,8 @@ public class PixieCrt extends JPanel
 		String str = "ELF Pixie Graphics\n";
 		str += String.format("enabled=%s test=%s\n", enabled, test);
 		str += String.format("DMAO=%s @ %d EFX=%s INT=%s\n", dma, bc, efx, intn);
-		str += String.format("last frame=%d bytes=%d\n", last, lastn);
+		//str += String.format("last frame=%d bytes=%d\n", last, lastn);
+		str += String.format("state=%s time=%d\n", state.name(), time);
 		return str;
 	}
 
@@ -135,11 +139,68 @@ public class PixieCrt extends JPanel
 	}
 
 	// ClockListener
-	public synchronized void addTicks(int ticks, long clk) {
+	public void addTicks(int ticks, long clk) {
+		if (!enabled) return;
 		if (time <= 0) return;
 		time -= ticks;
-		if (time <= 0) {
-			sem.release();
+		if (time > 0) return;
+		// update state...
+		switch(state) {
+		case BLANKING:
+			time = 232;
+			state = State.EFX1;
+			efx = true;
+			intr.setEF(src, 0, true);
+			break;
+		case EFX1:
+			time = 232;
+			state = State.INT;
+			intn = true;
+			intr.raiseINT(src);
+			break;
+		case INT:
+			time = 64;	// need something... 8 bytes
+			state = State.DMA;
+			intr.lowerINT(src);
+			intr.setEF(src, 0, false);
+			efx = false;
+			intn = false;
+			synchronized(this) {
+				bc = 0;
+				dma = true;
+				intr.raiseDMA_OUT(src);
+			}
+			break;
+		case DMA:
+			synchronized(this) {
+			if (!dma) {
+				if (bc >= 1024) {
+					state = State.BLANKING;
+					time = 13224;
+					intr.setEF(src, 0, false);
+					efx = false;
+					repaint();
+				} else {
+					state = State.GAP;
+					time = 48;
+				}
+			}
+			}
+			break;
+		case GAP:
+			synchronized(this) {
+			if (bc == 992) { // last 4 rows...
+				efx = true;
+				intr.setEF(src, 0, true);
+			}
+			}
+			time = 64;	// need something...
+			state = State.DMA;
+			synchronized(this) {
+				dma = true;
+				intr.raiseDMA_OUT(src);
+			}
+			break;
 		}
 	}
 
@@ -163,56 +224,6 @@ public class PixieCrt extends JPanel
 				b <<= 1;
 				++x;
 			}
-		}
-	}
-
-	private void sleep(int delay) {
-		synchronized(this) {
-			time = delay;
-			sem.drainPermits();
-		}
-		try {
-			sem.acquire();
-		} catch (Exception ee) {}
-	}
-
-	// Perform CRT scan timing
-	public void run() {
-		while (true) {
-			long t0 = System.nanoTime();
-			if (!enabled || test) {
-				sleep(33333);	// 1/60 second (1 field)
-				continue;
-			}
-			efx = true;
-			intr.setEF(src, 0, true);
-			sleep(256);	// 2 H-lines
-			intn = true;
-			intr.raiseINT(src);
-			sleep(256);	// 2 H-lines
-			intr.lowerINT(src);
-			intr.setEF(src, 0, false);
-			efx = false;
-			intn = false;
-			sleep(256);	// ???
-			synchronized(this) {
-				bc = 0;
-			}
-			for (int x = 0; x < 128; ++x) {
-				synchronized(this) {
-					dma = true;
-					intr.raiseDMA_OUT(src);
-				}
-				while (dma) {	// TODO: need timeout
-					synchronized(this) {}
-				}
-				sleep(64);	// 1/2 H-lines
-			}
-			lastn = bc;
-			repaint();
-			sleep(14503);	// video blanking... 60+54 H-lines.
-			try { Thread.sleep(4,317464); } catch (Exception ee) {}
-			last = System.nanoTime() - t0;
 		}
 	}
 }

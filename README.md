@@ -3,7 +3,7 @@
 * Under Development *
 
 ![Example](photos/screenshot-2.png)
-![Example](photos/pixie-1.png)
+![Example](photos/pixie-2.png)
 
 ![Example](photos/keypad-1.png)
 

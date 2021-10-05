@@ -32,7 +32,7 @@ intr:
 	plo	0	; refresh ptr = 0000 (R(0))
 refresh:
 ; This is for 64x32, may not work on simulator
- if 0
+ if 1
 	glo	0
 	sex	2
 	; 8 DMA cycles (R(0) += 8)

@@ -5,9 +5,9 @@
    0002   b2            	phi	2
    0003   b3            	phi	3
    0004   b4            	phi	4
-   0005   f8 20         	ldi	main.0
+   0005   f8 2d         	ldi	main.0
    0007   a3            	plo	3	; R(3) = main (next PC)
-   0008   f8 32         	ldi	stack.0
+   0008   f8 3f         	ldi	stack.0
    000a   a2            	plo	2	; R(2) = stack
    000b   f8 11         	ldi	intr.0
    000d   a1            	plo	1	; R(1) = intr
@@ -32,45 +32,45 @@
    001d   a0            	plo	0	; refresh ptr = 0000 (R(0))
    001e                 refresh:
                         ; This is for 64x32, may not work on simulator
-   0000                  if 0
-                        	glo	0
-                        	sex	2
+   0001                  if 1
+   001e   80            	glo	0
+   001f   e2            	sex	2
                         	; 8 DMA cycles (R(0) += 8)
-                        	sex	2
-                        	dec	0
-                        	plo	0
-                        	; 8 DMA cycles (R(0) += 8)
-                        	sex	2
-                        	dec	0
-                        	plo	0
-                        	; 8 DMA cycles (R(0) += 8)
-                        	sex	2
-                        	dec	0
-                        	plo	0
-                        	; 8 DMA cycles (R(0) += 8)
-                        	bn1	refresh
-                         endi
-   001e   30 0f         	br	return
-                        ; ---------------------
-   0020                 main:
    0020   e2            	sex	2
-   0021   69            	inp	1	; enable display
+   0021   20            	dec	0
+   0022   a0            	plo	0
+                        	; 8 DMA cycles (R(0) += 8)
+   0023   e2            	sex	2
+   0024   20            	dec	0
+   0025   a0            	plo	0
+                        	; 8 DMA cycles (R(0) += 8)
+   0026   e2            	sex	2
+   0027   20            	dec	0
+   0028   a0            	plo	0
+                        	; 8 DMA cycles (R(0) += 8)
+   0029   3c 1e         	bn1	refresh
+                         endi
+   002b   30 0f         	br	return
+                        ; ---------------------
+   002d                 main:
+   002d   e2            	sex	2
+   002e   69            	inp	1	; enable display
                         	; wait for entry of address...
-   0022   3f 22         	bn4	$.0	; wait for IN
-   0024   6c            	inp	4
-   0025   a4            	plo	4
-   0026                 more:
-   0026   37 26         	b4	$.0	; wait for release
-   0028   3f 28         	bn4	$.0	; wait for IN (data)
-   002a   6c            	inp	4
-   002b   54            	str	4
-   002c   14            	inc	4
-   002d   30 26         	br	more
+   002f   3f 2f         	bn4	$.0	; wait for IN
+   0031   6c            	inp	4
+   0032   a4            	plo	4
+   0033                 more:
+   0033   37 33         	b4	$.0	; wait for release
+   0035   3f 35         	bn4	$.0	; wait for IN (data)
+   0037   6c            	inp	4
+   0038   54            	str	4
+   0039   14            	inc	4
+   003a   30 33         	br	more
                         
-   002f   00 00 00      	db	0,0,0
-   0032                 stack:
+   003c   00 00 00      	db	0,0,0
+   003f                 stack:
                         
-   0038                 	org	($ + 7) and 0fff8h	; next CRT scanline
+   0040                 	org	($ + 7) and 0fff8h	; next CRT scanline
                         
    0000                  if 0	; simple "hello"
                         	db	0,0,0,0,0,0,0,0
@@ -87,57 +87,57 @@
                         	db	10010000b,11110000b,11110000b,11110000b,01100000b,0,0,0
                          endi
    0001                  if 1	; classic "spaceship"
-   0038   00 00 00 00   	db	0,0,0,0,0,0,0,0
-   003c   00 00 00 00   
    0040   00 00 00 00   	db	0,0,0,0,0,0,0,0
    0044   00 00 00 00   
-   0048   7b de db de   	db	7Bh,0DEh,0DBh,0DEh,000h,000h,000h,000h
+   0048   00 00 00 00   	db	0,0,0,0,0,0,0,0
    004c   00 00 00 00   
-   0050   4a 50 da 52   	db	4Ah,050h,0DAh,052h,000h,000h,000h,000h
+   0050   7b de db de   	db	7Bh,0DEh,0DBh,0DEh,000h,000h,000h,000h
    0054   00 00 00 00   
-   0058   42 5e ab d0   	db	42h,05Eh,0ABh,0D0h,000h,000h,000h,000h
+   0058   4a 50 da 52   	db	4Ah,050h,0DAh,052h,000h,000h,000h,000h
    005c   00 00 00 00   
-   0060   4a 42 8a 52   	db	4Ah,042h,08Ah,052h,000h,000h,000h,000h
+   0060   42 5e ab d0   	db	42h,05Eh,0ABh,0D0h,000h,000h,000h,000h
    0064   00 00 00 00   
-   0068   7b de 8a 5e   	db	7Bh,0DEh,08Ah,05Eh,000h,000h,000h,000h
+   0068   4a 42 8a 52   	db	4Ah,042h,08Ah,052h,000h,000h,000h,000h
    006c   00 00 00 00   
-   0070   00 00 00 00   	db	0,0,0,0,0,0,0,0
+   0070   7b de 8a 5e   	db	7Bh,0DEh,08Ah,05Eh,000h,000h,000h,000h
    0074   00 00 00 00   
-   0078   00 00 00 00   	db	0,0,0,0,0,0,7,0e0h
-   007c   00 00 07 e0   
-   0080   00 00 00 00   	db	00h,000h,000h,000h,0FFh,0FFh,0FFh,0FFh
-   0084   ff ff ff ff   
-   0088   00 06 00 01   	db	00h,006h,000h,001h,000h,000h,000h,001h
-   008c   00 00 00 01   
-   0090   00 7f e0 01   	db	00h,07Fh,0E0h,001h,000h,000h,000h,002h
-   0094   00 00 00 02   
-   0098   7f c0 3f e0   	db	7Fh,0C0h,03Fh,0E0h,0FCh,0FFh,0FFh,0FEh
-   009c   fc ff ff fe   
-   00a0   40 0f 00 10   	db	40h,00Fh,000h,010h,004h,080h,000h,000h
-   00a4   04 80 00 00   
-   00a8   7f c0 3f e0   	db	7Fh,0C0h,03Fh,0E0h,004h,080h,000h,000h
+   0078   00 00 00 00   	db	0,0,0,0,0,0,0,0
+   007c   00 00 00 00   
+   0080   00 00 00 00   	db	0,0,0,0,0,0,7,0e0h
+   0084   00 00 07 e0   
+   0088   00 00 00 00   	db	00h,000h,000h,000h,0FFh,0FFh,0FFh,0FFh
+   008c   ff ff ff ff   
+   0090   00 06 00 01   	db	00h,006h,000h,001h,000h,000h,000h,001h
+   0094   00 00 00 01   
+   0098   00 7f e0 01   	db	00h,07Fh,0E0h,001h,000h,000h,000h,002h
+   009c   00 00 00 02   
+   00a0   7f c0 3f e0   	db	7Fh,0C0h,03Fh,0E0h,0FCh,0FFh,0FFh,0FEh
+   00a4   fc ff ff fe   
+   00a8   40 0f 00 10   	db	40h,00Fh,000h,010h,004h,080h,000h,000h
    00ac   04 80 00 00   
-   00b0   00 3f d0 40   	db	00h,03Fh,0D0h,040h,004h,080h,000h,000h
+   00b0   7f c0 3f e0   	db	7Fh,0C0h,03Fh,0E0h,004h,080h,000h,000h
    00b4   04 80 00 00   
-   00b8   00 0f 08 20   	db	00h,00Fh,008h,020h,004h,080h,07Ah,01Eh
-   00bc   04 80 7a 1e   
-   00c0   00 00 07 90   	db	00h,000h,007h,090h,004h,080h,042h,010h
-   00c4   04 80 42 10   
-   00c8   00 00 18 7f   	db	00h,000h,018h,07Fh,0FCh,0F0h,072h,01Ch
-   00cc   fc f0 72 1c   
-   00d0   00 00 30 00   	db	00h,000h,030h,000h,000h,010h,042h,010h
-   00d4   00 10 42 10   
-   00d8   00 00 73 fc   	db	00h,000h,073h,0FCh,000h,010h,07Bh,0D0h
-   00dc   00 10 7b d0   
-   00e0   00 00 30 00   	db	00h,000h,030h,000h,03Fh,0F0h,000h,000h
-   00e4   3f f0 00 00   
-   00e8   00 00 18 0f   	db	00h,000h,018h,00Fh,0C0h,000h,000h,000h
-   00ec   c0 00 00 00   
-   00f0   00 00 07 f0   	db	00h,000h,007h,0F0h,000h,000h,000h,000h
-   00f4   00 00 00 00   
+   00b8   00 3f d0 40   	db	00h,03Fh,0D0h,040h,004h,080h,000h,000h
+   00bc   04 80 00 00   
+   00c0   00 0f 08 20   	db	00h,00Fh,008h,020h,004h,080h,07Ah,01Eh
+   00c4   04 80 7a 1e   
+   00c8   00 00 07 90   	db	00h,000h,007h,090h,004h,080h,042h,010h
+   00cc   04 80 42 10   
+   00d0   00 00 18 7f   	db	00h,000h,018h,07Fh,0FCh,0F0h,072h,01Ch
+   00d4   fc f0 72 1c   
+   00d8   00 00 30 00   	db	00h,000h,030h,000h,000h,010h,042h,010h
+   00dc   00 10 42 10   
+   00e0   00 00 73 fc   	db	00h,000h,073h,0FCh,000h,010h,07Bh,0D0h
+   00e4   00 10 7b d0   
+   00e8   00 00 30 00   	db	00h,000h,030h,000h,03Fh,0F0h,000h,000h
+   00ec   3f f0 00 00   
+   00f0   00 00 18 0f   	db	00h,000h,018h,00Fh,0C0h,000h,000h,000h
+   00f4   c0 00 00 00   
+   00f8   00 00 07 f0   	db	00h,000h,007h,0F0h,000h,000h,000h,000h
+   00fc   00 00 00 00   
                          endi
                         
-   00f8                 	end
-0011  intr          0020  main          0026  more          001e  refresh   
-000f  return        0032  stack         
+   0100                 	end
+0011  intr          002d  main          0033  more          001e  refresh   
+000f  return        003f  stack         
 
