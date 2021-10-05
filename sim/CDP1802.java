@@ -213,12 +213,10 @@ public class CDP1802 {
 	public String specialCycle() { return spcl; }
 
 	private int peek8(int ix) {
-		ticks += 8;
 		return computerImpl.peek8(regs[ix]);
 	}
 
 	private void poke8(int ix, int val) {
-		ticks += 8;
 		computerImpl.poke8(regs[ix], val);
 	}
 
@@ -234,7 +232,6 @@ public class CDP1802 {
 
 	private int peek16(int ix) {
 		int v;
-		ticks += 16;
 		v = computerImpl.peek8(regs[ix]) << 8;
 		v |= computerImpl.peek8(regs[ix] + 1);
 		return v;
@@ -301,6 +298,11 @@ public class CDP1802 {
 	}
 
 	public final int execute() {
+		// All instructions take at least S0 and S1 (16 ticks).
+		// Long branch/skip have another S1 (24 ticks).
+		// rumor has it that NOP also takes 24 cycles.
+		// Because DMA and INT are special cases, we start
+		// with "0" and let each case handle ticks.
 		ticks = 0;
 
 		if (activeDMAin) {
@@ -324,16 +326,20 @@ public class CDP1802 {
 			return -ticks;
 		}
 
+		// a.k.a S0 or "fetch"
+		ticks += 8;
 		opCode = fetch8();
 		decodeOpcode(opCode);
 
 		return ticks;
 	}
 
+	// a.k.a S1 or "execute"
 	private void decodeOpcode(int opCode) {
 		int T = (opCode & 0x0f);
 		int v;
 
+		ticks += 8;
 		switch (opCode) {
 		case 0x00:	// IDLE
 			idled = true;
@@ -706,9 +712,11 @@ public class CDP1802 {
 			setR_1(T, regD);
 			break;
 		case 0xc0:	// LBR
+			ticks += 8;
 			regs[regP] = peek16(regP);
 			break;
 		case 0xc1:	// LBQ
+			ticks += 8;
 			if (Q) {
 				regs[regP] = peek16(regP);
 			} else {
@@ -716,6 +724,7 @@ public class CDP1802 {
 			}
 			break;
 		case 0xc2:	// LBZ
+			ticks += 8;
 			if (regD == 0) {
 				regs[regP] = peek16(regP);
 			} else {
@@ -723,6 +732,7 @@ public class CDP1802 {
 			}
 			break;
 		case 0xc3:	// LBDF
+			ticks += 8;
 			if (DF) {
 				regs[regP] = peek16(regP);
 			} else {
@@ -730,26 +740,32 @@ public class CDP1802 {
 			}
 			break;
 		case 0xc4:	// NOP
+			ticks += 8;	// rumor has it... "long skip never"?
 			break;
 		case 0xc5:	// LSNQ
+			ticks += 8;
 			if (!Q) {
 				incr2(regP);
 			}
 			break;
 		case 0xc6:	// LSNZ
+			ticks += 8;
 			if (regD != 0) {
 				incr2(regP);
 			}
 			break;
 		case 0xc7:	// LSNF
+			ticks += 8;
 			if (!DF) {
 				incr2(regP);
 			}
 			break;
 		case 0xc8:	// LNBR
+			ticks += 8;
 			incr2(regP);
 			break;
 		case 0xc9:	// LBNQ
+			ticks += 8;
 			if (!Q) {
 				regs[regP] = peek16(regP);
 			} else {
@@ -757,6 +773,7 @@ public class CDP1802 {
 			}
 			break;
 		case 0xca:	// LBNZ
+			ticks += 8;
 			if (regD != 0) {
 				regs[regP] = peek16(regP);
 			} else {
@@ -764,6 +781,7 @@ public class CDP1802 {
 			}
 			break;
 		case 0xcb:	// LBNF
+			ticks += 8;
 			if (!DF) {
 				regs[regP] = peek16(regP);
 			} else {
@@ -771,21 +789,25 @@ public class CDP1802 {
 			}
 			break;
 		case 0xcc:	// LSIE
+			ticks += 8;
 			if (ffIE) {
 				incr2(regP);
 			}
 			break;
 		case 0xcd:	// LSQ
+			ticks += 8;
 			if (Q) {
 				incr2(regP);
 			}
 			break;
 		case 0xce:	// LSZ
+			ticks += 8;
 			if (regD == 0) {
 				incr2(regP);
 			}
 			break;
 		case 0xcf:	// LSDF
+			ticks += 8;
 			if (DF) {
 				incr2(regP);
 			}
