@@ -21,14 +21,12 @@ prom = pixie1.bin</PRE></UL>
 <P>NOTE: This program is not able to run from ROM, especially on a 256-byte
 RAM system. It will be necessary to transfer the ROM image into RAM.
 Fortunately, the simulator provides a command to do that.
+Also, the image may be directly loaded in RAM using the Debug menu
+item "Load Prog", in which case the PROM option is not needed.
 
 <P>Once the simulator starts, select the "Copy ROM to RAM" item in the "Debug" menu.
 The switch off LOAD and switch on RUN. At this point,
 an image should appear on the Pixie screen.
-
-<P>NOTE: the simulator video timing is currently not close enough to original hardware
-in order to be able to run 64x32 or 64x64 mode, which requires precise synchronization
-between the CPU and the video chip.
 
 </BODY>
 </HTML>
