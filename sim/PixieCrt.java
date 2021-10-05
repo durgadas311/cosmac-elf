@@ -112,9 +112,7 @@ public class PixieCrt extends JPanel
 		time = 64;	// a little delay
 	}
 
-	public String getDeviceName() {
-		return "CDP1861";
-	}
+	public String getDeviceName() { return "PIXIE"; }
 
 	public String dumpDebug() {
 		String str = "ELF Pixie Graphics\n";

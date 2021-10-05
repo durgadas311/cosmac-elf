@@ -26,9 +26,10 @@ public class VirtualCOSMAC_ELF {
 			FileInputStream cfg = new FileInputStream(rc);
 			props.load(cfg);
 			cfg.close();
-			System.err.format("Using config in %s\n", rc);
+			//System.err.format("Using config in %s\n", rc);
+			props.setProperty("configuration", rc);
 		} catch(Exception ee) {
-			System.err.format("No config file\n");
+			//System.err.format("No config file\n");
 		}
 
 // TODO: optional CDP1861 VDC

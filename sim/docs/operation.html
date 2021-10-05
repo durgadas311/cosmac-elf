@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<TITLE>Simulator Operation</TITLE>
+</HEAD>
+<BODY>
+<H3>Simulator Operation</H3>
+
+The simulator features are operated from the menu bar.
+The following menu items are available:
+
+<H4>Debug</H4>
+
+<DL>
+
+<DT>Trace (custom)</DT>
+<DD>Pops up a dialog for tracing the CPU execution of instructions.
+Trace output is sent to stderr or the "log" file.
+Tracing may be canceled with the "Trace OFF" menu item.
+Tracing is also canceled by changing the tracing parameters.
+</DD>
+
+<DT>Trace ON</DT>
+<DD>Turns tracing on immediately, flooding the log/stderr with
+trace lines.
+Tracing may be canceled with the "Trace OFF" menu item.
+</DD>
+
+<DT>Trace OFF</DT>
+<DD>Cancels any tracing currently enabled.
+</DD>
+
+<DT>Dump To Log/GUI</DT>
+<DD>Alternates between dumping data to log file (stderr) or
+pop-up windows. This does not affect tracing output.
+</DD>
+
+<DT>Dump CPU</DT>
+<DD>Dumps information about the CPU state.
+</DD>
+
+<DT>Dump Machine</DT>
+<DD>Dumps information about the platform.
+</DD>
+
+<DT>Dump Core</DT>
+<DD>Dumps the contents of RAM to a file.
+</DD>
+
+<DT>Load Prog</DT>
+<DD>Fills RAM with the contents of a file.
+</DD>
+
+<DT>Dump Page</DT>
+<DD>Dumps a 256-byte page of the CPU address space
+(ROM or RAM as appropriate).
+</DD>
+
+<DT>Disassemble</DT>
+<DD>Dumps disassembled instructions from a range page of the CPU address space.
+</DD>
+
+<DT>Copy ROM to RAM</DT>
+<DD>Copys the contents of the PROM into RAM. Does not require the PROM to be
+enabled (via jumper plug). This is essentially the same as "Load Prog"
+where the selected file is the one specified by the "prom" property.
+</DD>
+
+<DT>Dump ELF-FP</DT>
+<DD>Dumps information about the standard ELF front panel hardware.
+</DD>
+
+<DT>Dump HEXKEYPAD</DT>
+<DD>Dumps information about the hexadecimal keypad.
+Menu item does not exist if keypad is not installed.
+</DD>
+
+<DT>Dump PIXIE</DT>
+<DD>Dumps information about the PIXIE graphic display hardware.
+Menu item does not exist if pixie is not installed.
+</DD>
+
+<DT>Reset</DT>
+<DD>Performs a hardware reset. This should be equivalent to setting
+the RUN switch off.
+</DD>
+
+<DT>Quit</DT>
+<DD>Ends the simulation. Clicking the "close" button on any of the
+windows also ends the simulation.
+</DD>
+
+</DL>
+
+</BODY>
+</HTML>

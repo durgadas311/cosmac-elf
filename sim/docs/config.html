@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>Simulator Configuration</TITLE>
+</HEAD>
+<BODY>
+<H3>Simulator Configuration</H3>
+
+The simulator is customized using a plain-text configuration file.
+This file contains "property=value" lines which define the simulator
+configuration. The configuration file is searched in the following order:
+
+<OL>
+<LI>File name specified on the JAVA command
+<LI>File name in environment variable "COSMACELF_CFG"
+<LI>"./cosmac_elf.rc"
+<LI>"$HOME/.cosmac_elfrc"
+</OL>
+
+The following properties are recognized:
+
+<DL>
+
+<DT>log</DT>
+<DD>Specifies a file to be used for simulator (debug) output.
+Default is to send all output to stderr. Adding a "a" after
+the file name causes the previous file contents to be preserved,
+otherwise the file is truncated each time the simulator starts.</DD>
+
+<DT>ram</DT>
+<DD>Specifies the size of RAM. RAM starts at 0000h, but may
+be overlayed with PROM. Value must be a power of two.
+A suffix of "k" may be used to multiply by 1024.
+Default is 256 bytes.</DD>
+
+<DT>prom</DT>
+<DD>Specifies the file containing an image to be used for PROM.
+This image will be expanded to the next power of two in size.
+This property causes the base ELF to include jumper pins
+under the hex displays. Clicking on the jumper pins will
+install (or remove) a jumper plug on the pins. When plug is installed,
+PROM is enabled and overlays RAM at 0000h. Note, there must be
+more RAM than ROM, if RAM is required. RAM "underneath" the PROM
+is not accessible.</DD>
+
+<DT>hexkeypad</DT>
+<DD>(value ignored) Add the hexadecimal keypad to the simulation.</DD>
+
+<DT>pixie</DT>
+<DD>(value ignored) Add the PIXIE graphic display to the simulation.</DD>
+
+<DT>pixie_color</DT>
+<DD>Specify the screen color for the PIXIE graphic display.
+Value is a 6-digit hexadecimal number representing RGB.
+Default is green (00ff00).</DD>
+
+</DL>
+
+</BODY>
+</HTML>

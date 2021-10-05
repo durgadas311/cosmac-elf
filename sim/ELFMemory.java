@@ -15,10 +15,20 @@ public class ELFMemory extends ELFRoms implements Memory {
 		int ramsize = 256;
 		String s = props.getProperty("ram");
 		if (s != null) {
-			// TODO: parse "1K" etc.
-			ramsize = Integer.valueOf(s);
+			int mult = 1;
+			if (s.endsWith("k") || s.endsWith("K")) {
+				mult = 1024;
+				s = s.substring(0, s.length() - 1);
+			}
+			ramsize = Integer.valueOf(s) * mult;
 			if ((ramsize & (ramsize - 1)) != 0) {
-				System.err.format("RAM size is not power-of-two\n");
+				int n = 32 - Integer.numberOfLeadingZeros(ramsize);
+				if (n < 9) n = 9;
+				if (n > 17) n = 17;
+				ramsize = (1 << n);	// next larger
+				System.err.format(
+					"RAM size is not power-of-two, using %d\n",
+					ramsize);
 			}
 		}
 		mem = new byte[ramsize];
