@@ -361,7 +361,7 @@ public class CDP1802 {
 		case 0x0d:
 		case 0x0e:
 		case 0x0f:
-			regD = peek8(regs[T]);
+			regD = peek8(T);
 			break;
 		case 0x10:	// INC
 		case 0x11:
