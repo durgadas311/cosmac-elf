@@ -1,0 +1,194 @@
+                        ;  AN 1802 ANIMATION PROGRAM by E. DEVEAUX
+                        ; 
+                        ; 
+                        ;  THIS PROGRAM PROVIDES VARIABLE SPEED
+                        ;  ANIMATION OF THE IMAGE LOCATED AT #78 to
+                        ;  #F7 IN MEMORY.
+                        ;  SPEED CONTROL IS PROVIDED BY INPUT
+                        
+                        ; enable only one of these:
+   0000                 xroll	equ	0
+   0001                 xshift	equ	1
+   0000                 xboth	equ	0
+                        
+   0000   90            	GHI	0	;ZERO HIGH ORDER OF
+   0001   b1            	PHI	1	;R1 R2 R3.
+   0002   b2            	PHI	2
+   0003   b3            	PHI	3
+   0004   b4            	PHI 	4	;R4 POINTS TO REFRESH
+   0005   a4            	PLO	4	;ADDRESS
+   0006   f8 16         	LDI	INTRPT.0
+   0008   a1            	PLO	1
+   0009   f8 13         	LDI	STACK.0
+   000b   a2            	PLO	2
+   000c   f8 31         	LDI	MAIN.0
+   000e   a3            	PLO	3
+   000f   d3            	SEP	3	;GO TO MAIN_LINE
+   0010   01 02 03 00   	db	1,2,3,0	;STACK AREA
+   0013                 STACK	equ	$-1
+                        ; 
+                        ; THIS PROGRAM USES A MODIFIED VERSION
+                        ; OF THE INTERRUPT ROUTINE THAT APPEARED
+                        ; IN COSMAC ELF PART 4.
+                        ; 
+                        ; A SHIFT ROUTINE HAS BEEN ADDED THAT MOVES THE
+                        ;  STARSHIP FROM LEFT TO RIGHT ACROSS THE CRT.
+                        ; 
+   0014   72            RETURN:	LDXA
+   0015   70            	RET		;CYCLES
+   0016   22            INTRPT:	DEC	2	;2
+   0017   78            	SAV		;4R5 COUNTS REFRESH
+   0018   22            	DEC	2	;6	CYCLES, USED TO
+   0019   52            	STR	2	;8	DETERMINE WHEN TO
+   001a   15            	INC	5	;10	SHIFT /ROLL.
+   001b   c4            	NOP		;13
+   001c   94            	GHI	4	;15	R4 TO R0
+   001d   b0            	PHI	0	;17	REFRESH ADDRESS
+   001e   84            	GLO	4	;19
+   001f   a0            	PLO	0	;21
+                        
+   0020   80            	GLO	0	;23
+   0021   80            	GLO	0	;25
+   0022                 REFRESH:
+   0022   80            	GLO	0	; 27
+   0023   e2            	SEX	2	; 29
+                        	;	8 DMA CYCLES
+   0024   e2            	SEX	2
+   0025   20            	DEC	0
+   0026   a0            	PLO	0
+                        	;	8 DMA CYCLES
+   0027   e2            	SEX	2
+   0028   20            	DEC	0
+   0029   a0            	PLO	0
+                        	;	8 DMA CYCLES
+   002a   e2            	SEX	2
+   002b   20            	DEC	0
+   002c   a0            	PLO	0
+                        	;	8 DMA CYCLES
+   002d   3c 22         	BN1	REFRESH	; ON EF1 REFRESH
+   002f   30 14         	BR	RETURN	; IS OVER.
+                        
+   0031   e2            MAIN:	SEX	2	; RX=2
+   0032   69            	INP	1	; TELL 1861 TO
+                        			; TURN ON CRT.
+                        ; SFREAD READS INPUT SWITCHESTO CONTROL
+                        ; SPEED OF SHIFTS/ROLLS.
+                        ; INPUT SWITCH IS STORED AT STACK M(R2).
+                        ; 
+                        ; INITIAL VALUE OF STACK IS ZERO AND THERE IS
+                        ; NO MOVEMENT OF STAR SHIP UNTIL A NON ZERO BIT
+                        ; IS INPUT.
+   0033   3f 38         SFREAD:	BN4	CKSHIF	; IF NO INPUT GO
+   0035   37 35         WTREAD:	B4	WTREAD	; IF TIME TO SHIFT.
+   0037   6c            	INP	4	; READ INTO STACK.
+   0038   85            CKSHIF:	GLO	5	; GHI R5 VARY/SPEED
+   0039   f2            	AND		; OF STAR SHIP.
+   003a   32 33         	BZ	SFREAD	; SHIFT/ROLL BIT MATCH.
+   0000                  if xroll
+                        	BR	ROLL	; roll only
+                         else
+   003c   f8 00         	LDI	BEGSFT.1	;BR ROLL 3061
+                         endi
+   003e   b9            	PHI	9	;ROLL NO SHIFT
+                        
+                        
+   003f   f8 78         	LDI	BEGSFT.0
+   0041   a9            	PLO	9	;R9=FIRST LINE
+   0042   f8 10         	LDI	16	;TO SHIFT.
+   0044   a6            	PLO	6	;SHIFT 16 LINES.
+   0045   99            NXTLNE:	GHI	9
+   0046   ba            	PHI	10	;SAVE ADDRESS OF 1st
+   0047   89            	GLO	9	;ON LINE IN RA
+   0048   aa            	PLO	10
+   0049   f8 07         	LDI	7	;R7=BYTES TO SHIFT-1.
+   004b   a7            	PLO	7
+   004c   09            	LDN	9
+   004d   b8            	PHI	8	;SAVE 1ST BYTE ON
+   004e   76            	SHRC		;LINE IN R8.1
+   004f   19            NXTBYT:	INC	9	;POINT R9 TO NEXT BYTE.
+   0050   09            	LDN	9	;LOAD NEXT BYTE.
+   0051   76            	SHRC		;SHIFT RIGHT.
+   0052   59            	STR	9	;STORE BYTE
+   0053   27            	DEC	7
+   0054   87            	GLO	7	;CHECK IF ALL BYTES
+   0055   3a 4f         	BNZ	NXTBYT	;SHIFTED.
+   0057   98            	GHI	8	;PUT BIT 0 of 8TH
+   0058   76            	SHRC		;BYT ON BIT 7 OF
+   0059   5a            	STR	10	;1ST BYT ON LINE.
+   005a   19            	INC	9	;R9=BYTE 0 NXT LINE.
+   005b   26            	DEC	6
+   005c   86            	GLO	6	;CHECK IF 16 LINES
+   005d   3a 45         	BNZ	NXTLNE	;SHIFTED.
+                        ; enable only one of these:
+   0000                  if xboth
+                        	SKP		; both shift and roll
+                        	db	SFREAD.0
+                         endi
+   0001                  if xshift
+   005f   30 33         	BR	SFREAD	;SKP 38 ROLL AND SHIFT.
+                         endi
+   0061   84            ROLL:	GLO	4	;INCREMENT R4 ONE LINE
+   0062   fc 08         	ADI	8	;ROLL SCREEN UP.
+   0064   a4            	PLO	4
+   0065   94            	GHI	4	;CHANGE LNNO 116 TO
+   0066   f8 00         	LDI	00	;ADCI 0 7C00 IF MORE
+   0068   b4            	PHI	4	;THAN 256 BYTES.
+   0069   32 33         	BZ	SFREAD
+   006b   84            	GLO	4
+   006c   b4            	PHI	4
+   006d   30 33         	BR	SFREAD
+                        
+                        ; ENTER IMAGE TO BE SHIFTED IN LOCATIONS
+                        ; X'78' - x'F7'.
+                        	;org	($ + 7) and 0fff8h	; next CRT scanline
+   006f   00            	fill	0, (($ + 7) and 0fff8h) - $
+   0070   00 00 00 00   	db	0,0,0,0,0,0,0,0	; force blank line...
+   0074   00 00 00 00   
+   0078                 BEGSFT:	ds	0
+   0000                  if 0	; no space for the "COSMAC" lines...
+                        	db	7Bh,0DEh,0DBh,0DEh,000h,000h,000h,000h
+                        	db	4Ah,050h,0DAh,052h,000h,000h,000h,000h
+                        	db	42h,05Eh,0ABh,0D0h,000h,000h,000h,000h
+                        	db	4Ah,042h,08Ah,052h,000h,000h,000h,000h
+                        	db	7Bh,0DEh,08Ah,05Eh,000h,000h,000h,000h
+                        	db	0,0,0,0,0,0,0,0
+                         endi
+   0078   00 00 00 00   	db	0,0,0,0,0,0,7,0e0h
+   007c   00 00 07 e0   
+   0080   00 00 00 00   	db	00h,000h,000h,000h,0FFh,0FFh,0FFh,0FFh
+   0084   ff ff ff ff   
+   0088   00 06 00 01   	db	00h,006h,000h,001h,000h,000h,000h,001h
+   008c   00 00 00 01   
+   0090   00 7f e0 01   	db	00h,07Fh,0E0h,001h,000h,000h,000h,002h
+   0094   00 00 00 02   
+   0098   7f c0 3f e0   	db	7Fh,0C0h,03Fh,0E0h,0FCh,0FFh,0FFh,0FEh
+   009c   fc ff ff fe   
+   00a0   40 0f 00 10   	db	40h,00Fh,000h,010h,004h,080h,000h,000h
+   00a4   04 80 00 00   
+   00a8   7f c0 3f e0   	db	7Fh,0C0h,03Fh,0E0h,004h,080h,000h,000h
+   00ac   04 80 00 00   
+   00b0   00 3f d0 40   	db	00h,03Fh,0D0h,040h,004h,080h,000h,000h
+   00b4   04 80 00 00   
+   00b8   00 0f 08 20   	db	00h,00Fh,008h,020h,004h,080h,000h,000h
+   00bc   04 80 00 00   
+   00c0   00 00 07 90   	db	00h,000h,007h,090h,004h,080h,000h,000h
+   00c4   04 80 00 00   
+   00c8   00 00 18 7f   	db	00h,000h,018h,07Fh,0FCh,0F0h,000h,000h
+   00cc   fc f0 00 00   
+   00d0   00 00 30 00   	db	00h,000h,030h,000h,000h,010h,000h,000h
+   00d4   00 10 00 00   
+   00d8   00 00 73 fc   	db	00h,000h,073h,0FCh,000h,010h,000h,000h
+   00dc   00 10 00 00   
+   00e0   00 00 30 00   	db	00h,000h,030h,000h,03Fh,0F0h,000h,000h
+   00e4   3f f0 00 00   
+   00e8   00 00 18 0f   	db	00h,000h,018h,00Fh,0C0h,000h,000h,000h
+   00ec   c0 00 00 00   
+   00f0   00 00 07 f0   	db	00h,000h,007h,0F0h,000h,000h,000h,000h
+   00f4   00 00 00 00   
+                        
+   00f8                 	END
+0078  BEGSFT        0038  CKSHIF        0016  INTRPT        0031  MAIN      
+004f  NXTBYT        0045  NXTLNE        0022  REFRESH       0014  RETURN    
+0061  ROLL          0033  SFREAD        0013  STACK         0035  WTREAD    
+0000  xboth         0000  xroll         0001  xshift        
+
