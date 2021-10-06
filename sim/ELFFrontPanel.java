@@ -89,6 +89,8 @@ public class ELFFrontPanel extends JPanel
 		Icon sw_w_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_off.png"));
 		Icon sw_r_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_red_on.png"));
 		Icon sw_r_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_red_off.png"));
+		Icon pb_r_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/pb_on.png"));
+		Icon pb_r_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/pb_off.png"));
 		String f = "TIL311.ttf";
 		float fz = 35f;
 		try {
@@ -111,8 +113,13 @@ public class ELFFrontPanel extends JPanel
 		in.setFocusable(false);
 		in.setFocusPainted(false);
 		in.setBorderPainted(false);
-		in.setPressedIcon(sw_r_on);
-		in.setIcon(sw_r_off);
+		if (props.getProperty("elffrontpanel_in_toggle") != null) {
+			in.setPressedIcon(sw_r_on);
+			in.setIcon(sw_r_off);
+		} else {
+			in.setPressedIcon(pb_r_on);
+			in.setIcon(pb_r_off);
+		}
 		in.setOpaque(false);
 		in.setBackground(bg);
 		in.setContentAreaFilled(false);

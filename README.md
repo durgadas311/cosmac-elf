@@ -1,6 +1,6 @@
 # COS/MAC ELF Simulator
 
-![Example](photos/screenshot-2.png)
+![Example](photos/screenshot-3.png)
 ![Example](photos/pixie-2.png)
 
 This simulator aspires to replicate the experience of
