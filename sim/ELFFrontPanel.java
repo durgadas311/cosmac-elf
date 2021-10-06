@@ -39,6 +39,9 @@ public class ELFFrontPanel extends JPanel
 	private boolean input = false;
 	private Interruptor intr;
 	private int src;
+	private int ioa = 0b100;	// N2 only
+	private int iom = 0b100;	// SIMPLE
+	private int efn = 3;
 
 	JCheckBox[] btns;
 	JButton in;
@@ -52,6 +55,30 @@ public class ELFFrontPanel extends JPanel
 		this.intr = intr;
 		src = intr.registerINT();
 		intr.addDMAController(this);
+		String s = props.getProperty("elffrontpanel_port");
+		if (s != null) {
+			int n = Integer.valueOf(s);
+			if (n < 1 || n > 7) {
+				System.err.format("Invalid elffrontpanel_port: %d\n", n);
+			} else {
+				ioa = n;
+			}
+		}
+		if (intr.IODecoder() == Interruptor.SIMPLE) {
+			iom = ioa;	// not always simple... e.g. ioa=7
+		} else {
+			iom = 0b111;	// require exact match
+		}
+		s = props.getProperty("elffrontpanel_ef");
+		if (s != null) {
+			int n = Integer.valueOf(s);
+			if (n < 1 || n > 4) {
+				System.err.format("Invalid elffrontpanel_ef: %d\n", n);
+			} else {
+				efn = n - 1;
+			}
+		}
+
 		tiny = new Font("Sans-serif", Font.PLAIN, 8);
 		lesstiny = new Font("Sans-serif", Font.PLAIN, 10);
 		btns = new JCheckBox[12];
@@ -243,6 +270,8 @@ public class ELFFrontPanel extends JPanel
 		// Now safe to do this?
 		intr.setSwitch(RUN, btns[RUN].isSelected());
 		intr.setSwitch(LOAD, btns[LOAD].isSelected());
+		System.err.format("ELFFrontPanel at port %d mask %d EF%d\n",
+			ioa, iom, efn + 1);
 	}
 
 	private JPanel getROMJumper() {
@@ -350,8 +379,8 @@ public class ELFFrontPanel extends JPanel
 
 	// IODevice
 	public void reset() {}
-	public int getBaseAddress() { return 0b100; } // N2 only
-	public int getMask() { return 0b100; } // N2 only
+	public int getBaseAddress() { return ioa; }
+	public int getMask() { return iom; }
 	public int in(int port) {
 		return getData();
 	}
@@ -376,7 +405,7 @@ public class ELFFrontPanel extends JPanel
 				input = true;
 				intr.raiseDMA_IN(src);
 			}
-			intr.setSwitch(IN, true);
+			intr.setEF(src, efn, true);
 			break;
 		}
 	}
@@ -391,7 +420,7 @@ public class ELFFrontPanel extends JPanel
 			intr.setSwitch(mn, btns[mn].isSelected());
 			break;
 		case IN:
-			intr.setSwitch(IN, false);
+			intr.setEF(src, efn, false);
 			break;
 		}
 	}

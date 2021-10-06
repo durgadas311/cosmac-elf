@@ -1,6 +1,10 @@
 // Copyright (c) 2016 Douglas Miller <durgadas311@gmail.com>
 
 public interface Interruptor {
+	static final int SIMPLE = 1;	// I/O Decoder
+	static final int STRICT = 2;	// I/O Decoder
+	static final int EXTENDED = 3;	// I/O Decoder
+	int IODecoder();
 	int registerINT();
 	void raiseINT(int src);
 	void lowerINT(int src);

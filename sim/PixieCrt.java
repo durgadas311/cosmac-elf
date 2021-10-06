@@ -33,14 +33,42 @@ public class PixieCrt extends JPanel
 	private int time = 0;
 	private enum State { BLANKING, EFX1, INT, DMA, GAP, EFX2 };
 	private State state = State.BLANKING;
+	private int ioa = 0b001;
+	private int iom = 0b001;
+	private int efn = 0;
 
 	public PixieCrt(Properties props, Interruptor intr) {
 		super();
 		this.intr = intr;
 		src = intr.registerINT();
 		intr.addClockListener(this);
+		String s = props.getProperty("pixie_port");
+		if (s != null) {
+			int n = Integer.valueOf(s);
+			if (n < 1 || n > 7) {
+				System.err.format("Invalid pixie_port: %d\n", n);
+			} else {
+				ioa = n;
+			}
+		}
+		if (intr.IODecoder() == Interruptor.SIMPLE) {
+			// assumes 'ioa' has only 1 bit set
+			iom = ioa; // not always simple... e.g. ioa=7
+		} else {
+			iom = 0b111; // require exact match
+		}
+		s = props.getProperty("pixie_ef");
+		if (s != null) {
+			int n = Integer.valueOf(s);
+			if (n < 1 || n > 4) {
+				System.err.format("Invalid pixie_ef: %d\n", n);
+			} else {
+				efn = n - 1;
+			}
+		}
+
 		phosphor = new Color(0, 255, 0);
-		String s = props.getProperty("pixie_color");
+		s = props.getProperty("pixie_color");
 		if (s != null) {
 			phosphor = new Color(Integer.valueOf(s, 16));
 		}
@@ -77,13 +105,15 @@ public class PixieCrt extends JPanel
 			enabled = true;
 			repaint();
 		}
+		System.err.format("PixieCrt at port %d mask %d EF%d%s\n",
+			ioa, iom, efn + 1, test ? " (test)" : "");
 	}
 
 	public void reset() {
 		if (test) return;
 		intr.lowerDMA_OUT(src);
 		intr.lowerINT(src);
-		intr.setEF(src, 0, false);
+		intr.setEF(src, efn, false);
 		enabled = false;
 		time = 0;
 		state = State.BLANKING;
@@ -95,8 +125,8 @@ public class PixieCrt extends JPanel
 		repaint();
 	}
 
-	public int getBaseAddress() { return 0b001; }
-	public int getMask() { return 0b001; }
+	public int getBaseAddress() { return ioa; }
+	public int getMask() { return iom; }
 
 	public int in(int port) {
 		enabled = true;
@@ -148,7 +178,7 @@ public class PixieCrt extends JPanel
 			time = 232;
 			state = State.EFX1;
 			efx = true;
-			intr.setEF(src, 0, true);
+			intr.setEF(src, efn, true);
 			break;
 		case EFX1:
 			time = 232;
@@ -160,7 +190,7 @@ public class PixieCrt extends JPanel
 			time = 64;	// need something... 8 bytes
 			state = State.DMA;
 			intr.lowerINT(src);
-			intr.setEF(src, 0, false);
+			intr.setEF(src, efn, false);
 			efx = false;
 			intn = false;
 			synchronized(this) {
@@ -175,7 +205,7 @@ public class PixieCrt extends JPanel
 				if (bc >= 1024) {
 					state = State.BLANKING;
 					time = 13224;
-					intr.setEF(src, 0, false);
+					intr.setEF(src, efn, false);
 					efx = false;
 					repaint();
 				} else {
@@ -189,7 +219,7 @@ public class PixieCrt extends JPanel
 			synchronized(this) {
 			if (bc == 992) { // last 4 rows...
 				efx = true;
-				intr.setEF(src, 0, true);
+				intr.setEF(src, efn, true);
 			}
 			}
 			time = 64;	// need something...

@@ -20,11 +20,39 @@ public class HexKeyPad extends JFrame
 	private int index = 0;
 	private int src;
 	private int key = -1;
+	private int ioa = 0x010;
+	private int iom = 0x010;
+	private int efn = 1;
 
 	public HexKeyPad(Properties props, Interruptor intr) {
 		super("ELF Hex Keypad");
 		this.intr = intr;
 		src = intr.registerINT();
+		String s = props.getProperty("hexkeypad_port");
+		if (s != null) {
+			int n = Integer.valueOf(s);
+			if (n < 1 || n > 7) {
+				System.err.format("Invalid hexkeypad_port: %d\n", n);
+			} else {
+				ioa = n;
+			}
+		}
+		if (intr.IODecoder() == Interruptor.SIMPLE) {
+			// assumes 'ioa' has only 1 bit set
+			iom = ioa; // not always simple... e.g. ioa=7
+		} else {
+			iom = 0b111; // require exact match
+		}
+		s = props.getProperty("hexkeypad_ef");
+		if (s != null) {
+			int n = Integer.valueOf(s);
+			if (n < 1 || n > 4) {
+				System.err.format("Invalid hexkeypad_ef: %d\n", n);
+			} else {
+				efn = n - 1;
+			}
+		}
+
 		btns = new JButton[16];
 		Color bg = new Color(0,0,0);
 		Color ky = new Color(240,240,220);
@@ -130,17 +158,17 @@ public class HexKeyPad extends JFrame
 
 	// IODevice
 	public void reset() {}
-	public int getBaseAddress() { return 0b010; } // N1 only
-	public int getMask() { return 0b010; } // N1 only
+	public int getBaseAddress() { return ioa; }
+	public int getMask() { return iom; }
 	public int in(int port) { return 0; }
 	public void out(int port, int value) {
 		index = value & 0x0f;
 		//System.err.format("index = %d\n", index);
 		if (key == index) {
 			//System.err.format("EF2* %d\n", index);
-			intr.setEF(src, 1, true);	// EF2
+			intr.setEF(src, efn, true);	// EF2
 		} else {
-			intr.setEF(src, 1, false);	// EF2
+			intr.setEF(src, efn, false);	// EF2
 		}
 	}
 	public String getDeviceName() { return "HEXKEYPAD"; }
@@ -158,7 +186,7 @@ public class HexKeyPad extends JFrame
 		key = mn;
 		if (mn == index) {
 			//System.err.format("EF2 %d\n", mn);
-			intr.setEF(src, 1, true);	// EF2
+			intr.setEF(src, efn, true);	// EF2
 		}
 	}
 	public void mouseReleased(MouseEvent e) {
@@ -166,6 +194,6 @@ public class HexKeyPad extends JFrame
 		int mn = btn.getMnemonic();
 		mn &= 0xff;
 		key = -1;
-		intr.setEF(src, 1, false);	// EF2
+		intr.setEF(src, efn, false);	// EF2
 	}
 }

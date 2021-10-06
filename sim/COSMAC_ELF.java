@@ -30,7 +30,6 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	private int dmaInLines;
 	private int dmaOutLines;
 	private int[] efLines;
-	private int efSrc;
 	private int intMask;
 	private Vector<ClockListener> clks;
 	private Vector<TimeListener> times;
@@ -39,6 +38,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	private int nanoSecCycle = 500;
 	private CDP1802Disassembler disas;
 	private ReentrantLock cpuLock;
+	private int iodecoder = Interruptor.SIMPLE;
 
 	// Missed 2mS interrupt statistics
 	private long backlogNs;
@@ -60,7 +60,6 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		intrs = new Vector<InterruptController>();
 		dmas = new Vector<DMAController>();
 		efLines = new int[4];
-		efSrc = registerINT();	// For IN button
 
 		// Do this early, so we can log messages appropriately.
 		s = props.getProperty("log");
@@ -83,6 +82,20 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 			System.err.format("No config file found\n");
 		} else {
 			System.err.format("Using configuration from %s\n", s);
+		}
+
+		s = props.getProperty("iodecoder");
+		if (s != null) {
+			if (s.equalsIgnoreCase("simple")) {
+				iodecoder = Interruptor.SIMPLE;
+			} else if (s.equalsIgnoreCase("strict")) {
+				iodecoder = Interruptor.STRICT;
+			} else if (s.equalsIgnoreCase("extended")) {
+				iodecoder = Interruptor.EXTENDED;
+				// TODO: add extended decoder hardware
+			} else {
+				System.err.format("Invalid 'iodecoder' value \"%s\"\n", s);
+			}
 		}
 
 		cpu = new CDP1802(this);
@@ -187,6 +200,8 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 
 	/////////////////////////////////////////////
 	/// Interruptor interface implementation ///
+	public int IODecoder() { return iodecoder; }
+
 	public int registerINT() {
 		int val = intRegistry++;
 		// TODO: check for overflow (32 bits max?)
@@ -251,8 +266,6 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 			if (cpu.getState() == CDP1802.State.RESET) {
 				reset();
 			}
-		} else if (sw == ELFFrontPanel.IN) {
-			setEF(efSrc, 3, on);	// EF4
 		} else if (sw == ELFFrontPanel.PROM) {
 			mem.setROM(on);
 		}

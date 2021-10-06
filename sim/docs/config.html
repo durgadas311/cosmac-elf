@@ -48,8 +48,44 @@ PROM is enabled and overlays RAM at 0000h. Note, there must be
 more RAM than ROM, if RAM is required. RAM "underneath" the PROM
 is not accessible.</DD>
 
+<DT>iodecoder</DT>
+<DD>Choose the I/O decoder scheme. Values are:
+<DL>
+<DT>simple</DT>
+<DD>is the default, where multiple devices might be activated
+by certain I/O instructions (e.g. "OUT 7").
+</DD>
+<DT>strict</DT>
+<DD>is where the N0,N1,N2 lines connect to a 1-of-8 decoder.
+Each I/O instruction activates strictly 1 device.
+</DD>
+<DT>extended</DT>
+<DD>Not yet implemented.
+This scheme requires an extra output port/latch to hold
+an 8-bit I/O port address. Every I/O device requires setting the
+port first.
+</DD>
+</DL>
+</DD>
+
+<DT>elffrontpanel_port</DT>
+<DD>Set the I/O port ('n' for "OUT n"/"IN n" instructions).
+Default is 4 (using N2 signal).</DD>
+
+<DT>elffrontpanel_ef</DT>
+<DD>Set the EF input for detecting IN button.
+Default is 4 (using EF4 signal).</DD>
+
 <DT>hexkeypad</DT>
 <DD>(value ignored) Add the hexadecimal keypad to the simulation.</DD>
+
+<DT>hexkeypad_port</DT>
+<DD>Set the I/O port ('n' for "OUT n"/"IN n" instructions).
+Default is 2 (using N1 signal).</DD>
+
+<DT>hexkeypad_ef</DT>
+<DD>Set the EF input for detecting key pressed.
+Default is 2 (using EF2 signal).</DD>
 
 <DT>pixie</DT>
 <DD>(value ignored) Add the PIXIE graphic display to the simulation.</DD>
@@ -58,6 +94,14 @@ is not accessible.</DD>
 <DD>Specify the screen color for the PIXIE graphic display.
 Value is a 6-digit hexadecimal number representing RGB.
 Default is green (00ff00).</DD>
+
+<DT>pixie_port</DT>
+<DD>Set the I/O port ('n' for "OUT n"/"IN n" instructions).
+Default is 1 (using N0 signal).</DD>
+
+<DT>pixie_ef</DT>
+<DD>Set the EF input for detecting frame refresh start/end.
+Default is 1 (using EF1 signal).</DD>
 
 </DL>
 
