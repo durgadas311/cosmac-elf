@@ -1,5 +1,8 @@
 # COS/MAC ELF Simulator
 
+![Example](photos/screenshot-2.png)
+![Example](photos/pixie-2.png)
+
 This simulator aspires to replicate the experience of
 using the "COS/MAC ELF" home-built computer, as described
 in these
@@ -25,9 +28,6 @@ Where *config-file* indicates an optional argument being the filename
 of a configuration file ("[]" indicates optional, not literal characters).
 
 The "Debug" menu provides methods for debugging and other conveniences.
-
-![Example](photos/screenshot-2.png)
-![Example](photos/pixie-2.png)
 
 ![Example](photos/keypad-1.png)
 
