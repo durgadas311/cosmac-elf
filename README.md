@@ -14,7 +14,8 @@ Optional hardware add-ons include:
 
 A plain-text configuration file may be used to add optional hardware and expand RAM.
 
-The simulator provides a "Help" menu
+The simulator provides a
+["Help" menu](https://htmlpreview.github.io/?https://github.com/durgadas311/cosmac-elf/blob/master/sim/docs/cosmac_elf.html)
 which contains documentation on configuring and using the simulator.
 The simulator is started using this command:
 
