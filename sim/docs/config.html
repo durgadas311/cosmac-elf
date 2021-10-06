@@ -5,7 +5,7 @@
 <BODY>
 <H3>Simulator Configuration</H3>
 
-The simulator is customized using a plain-text configuration file.
+<P>The simulator is customized using a plain-text configuration file.
 This file contains "property=value" lines which define the simulator
 configuration. The configuration file is searched in the following order:
 
@@ -16,7 +16,13 @@ configuration. The configuration file is searched in the following order:
 <LI>"$HOME/.cosmac_elfrc"
 </OL>
 
-The following properties are recognized:
+<P>Any properties given on the command line will
+override those in a configuration file.
+Command line properties must include an equals sign ('=')
+in order to be recognized, regardless of whether the property
+value is used/required.
+
+<P>The following properties are recognized:
 
 <DL>
 

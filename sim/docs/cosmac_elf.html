@@ -7,10 +7,13 @@
 
 <P>Basic operation of simulator features is described <A HREF="operation.html">here</A>.
 
-<P>The simulator is customized using a plain-text configuration file.
-Details are <A HREF="config.html">here</A>.
+<P>The simulator is customized using properties that are specified by
+"property=value" expressions.
+These assignments may be in a plain-text file whose filename is
+given on the command line (or assumed), and/or by assignments as command line arguments.
+Details of properties are <A HREF="config.html">here</A>.
 
-<P>Without a configuration file, the ELF with 256 bytes of RAM is
+<P>Without a configuration file or properties, an ELF with 256 bytes of RAM is
 created, with no optional hardware.
 
 <P>Some examples, using programs provided in this repository, are:

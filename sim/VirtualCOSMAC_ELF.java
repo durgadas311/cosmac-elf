@@ -10,8 +10,15 @@ public class VirtualCOSMAC_ELF {
 	public static void main(String[] args) {
 		Properties props = new Properties();
 		String rc = System.getenv("COSMACELF_CFG");
-		if (args.length > 0) {
-			rc = args[0];
+		for (String arg : args) {
+			if (arg.indexOf('=') < 0) {
+				File f = new File(arg);
+				if (f.exists()) {
+					rc = arg;
+					//rc = f.getAbsolutePath();
+					break;
+				}
+			}
 		}
 		if (rc == null) {
 			File f = new File("./cosmac_elf.rc");
@@ -30,6 +37,14 @@ public class VirtualCOSMAC_ELF {
 			props.setProperty("configuration", rc);
 		} catch(Exception ee) {
 			//System.err.format("No config file\n");
+		}
+		// Now override props from file with cmdline
+		int x;
+		for (String arg : args) {
+			if ((x = arg.indexOf('=')) < 0) continue;
+			String prop = arg.substring(0, x).trim();
+			String val = arg.substring(x + 1).trim();
+			props.setProperty(prop, val);
 		}
 
 // TODO: optional CDP1861 VDC

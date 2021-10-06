@@ -18,5 +18,8 @@ VirtualCOSMAC_ELF.jar: $(CLASSES) $(SUPPS)
 	jar -cmf Manifest.txt $@ *.class *.ttf \
 		icons/*.png docs/*.html docs/*.png
 
+ship: VirtualCOSMAC_ELF.jar
+	rsync -uvW VirtualCOSMAC_ELF.jar ../bin/VirtualCOSMAC_ELF.jar
+
 clean:
 	rm -f *.class
