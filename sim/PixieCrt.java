@@ -127,6 +127,7 @@ public class PixieCrt extends JPanel
 
 	public int getBaseAddress() { return ioa; }
 	public int getMask() { return iom; }
+	public int getDevType() { return IODevice.IN_OUT; }	// only INP used?
 
 	public int in(int port) {
 		enabled = true;

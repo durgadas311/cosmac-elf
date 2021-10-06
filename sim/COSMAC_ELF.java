@@ -483,7 +483,8 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	public int inPort(int port) {
 		int val = 0;
 		for (IODevice dev : devs) {
-			if ((port & dev.getMask()) == dev.getBaseAddress()) {
+			if ((dev.getDevType() & IODevice.IN) != 0 &&
+				(port & dev.getMask()) == dev.getBaseAddress()) {
 				// last matching port wins...
 				val = dev.in(port);
 			}
@@ -492,7 +493,9 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	}
 	public void outPort(int port, int value) {
 		for (IODevice dev : devs) {
-			if ((port & dev.getMask()) == dev.getBaseAddress()) {
+			if ((dev.getDevType() & IODevice.OUT) != 0 &&
+				(port & dev.getMask()) == dev.getBaseAddress()) {
+				// all matching ports get output
 				dev.out(port, value);
 			}
 		}

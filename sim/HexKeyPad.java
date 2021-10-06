@@ -160,7 +160,8 @@ public class HexKeyPad extends JFrame
 	public void reset() {}
 	public int getBaseAddress() { return ioa; }
 	public int getMask() { return iom; }
-	public int in(int port) { return 0; }
+	public int getDevType() { return IODevice.OUT; }
+	public int in(int port) { return 0; }	// never called
 	public void out(int port, int value) {
 		index = value & 0x0f;
 		//System.err.format("index = %d\n", index);

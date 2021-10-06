@@ -381,6 +381,7 @@ public class ELFFrontPanel extends JPanel
 	public void reset() {}
 	public int getBaseAddress() { return ioa; }
 	public int getMask() { return iom; }
+	public int getDevType() { return IODevice.IN_OUT; }
 	public int in(int port) {
 		return getData();
 	}
