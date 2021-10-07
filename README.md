@@ -8,6 +8,8 @@ using the "COS/MAC ELF" home-built computer, as described
 in these
 ![Popular Electronics articles](http://www.exemark.com/Microcontrollers/PopularElecwebc.pdf).
 
+The simulator is contained entirely in the [JAR file](bin/VirtualCOSMAC_ELF.jar).
+
 The default configuration is 256 bytes of RAM and no PROM, no additional hardware.
 Optional hardware add-ons include:
 
