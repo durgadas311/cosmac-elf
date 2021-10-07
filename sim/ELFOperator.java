@@ -51,9 +51,7 @@ public class ELFOperator implements ActionListener, Runnable
 	//------------------
 	JPanel dmppg_pn;
 	JPanel dump_pg_pn;
-	JPanel dump_bnk_pn;
 	JTextField dump_pg;
-	JTextField dump_bnk;
 	JCheckBox dump_rom;
 	//------------------
 	JPanel dasm_pn;
@@ -64,6 +62,9 @@ public class ELFOperator implements ActionListener, Runnable
 	JTextField dasm_hi;
 	JTextField dasm_bnk;
 	JCheckBox dasm_rom;
+	//------------------
+	JPanel load_pn;
+	JTextField load_adr;
 
 	Map<Integer, String> _devs;
 	Map<Integer, JMenuItem> _mnus;
@@ -132,7 +133,7 @@ public class ELFOperator implements ActionListener, Runnable
 		_sys_mu.add(mi);
 		if (props.getProperty("prom") != null) {
 			_copy_key = _key++;
-			mi = new JMenuItem("Copy ROM to RAM", _copy_key);
+			mi = new JMenuItem("Copy PROM to RAM", _copy_key);
 			mi.addActionListener(this);
 			_sys_mu.add(mi);
 		}
@@ -183,22 +184,23 @@ public class ELFOperator implements ActionListener, Runnable
 		trace_pn.add(trace_hi_pn);
 		trace_pn.add(trace_sec_pn);
 
+		// Dialog for Load Prog...
+		load_pn = new JPanel();
+		load_pn.add(new JLabel("Adr (hex):"));
+		load_adr = new JTextField();
+		load_adr.setPreferredSize(new Dimension(50, 20));
+		load_pn.add(load_adr);
+
 		// Dialog for Dump Page...
 		dmppg_pn = new JPanel();
 		dmppg_pn.setLayout(new BoxLayout(dmppg_pn, BoxLayout.Y_AXIS));
-		dump_bnk = new JTextField();
-		dump_bnk.setPreferredSize(new Dimension(30, 20));
-		dump_bnk_pn = new JPanel();
-		dump_bnk_pn.add(new JLabel("Bank:"));
-		dump_bnk_pn.add(dump_bnk);
-		dmppg_pn.add(dump_bnk_pn);
 		dump_pg = new JTextField();
 		dump_pg.setPreferredSize(new Dimension(50, 20));
 		dump_pg_pn = new JPanel();
 		dump_pg_pn.add(new JLabel("Page (00-FF):"));
 		dump_pg_pn.add(dump_pg);
 		dmppg_pn.add(dump_pg_pn);
-		dump_rom = new JCheckBox("ROM Enabled");
+		dump_rom = new JCheckBox("PROM Enabled");
 		JPanel pn = new JPanel();
 		pn.add(dump_rom);
 		dmppg_pn.add(pn);
@@ -224,7 +226,7 @@ public class ELFOperator implements ActionListener, Runnable
 		dasm_hi_pn.add(new JLabel("High PC(excl):"));
 		dasm_hi_pn.add(dasm_hi);
 		dasm_pn.add(dasm_hi_pn);
-		dasm_rom = new JCheckBox("ROM Enabled");
+		dasm_rom = new JCheckBox("PROM Enabled");
 		pn = new JPanel();
 		pn.add(dasm_rom);
 		dasm_pn.add(pn);
@@ -299,10 +301,11 @@ public class ELFOperator implements ActionListener, Runnable
 	}
 
 	private void doLoadDialog() {
+		load_adr.setText("0");
 		SuffFileChooser ch = new SuffFileChooser("Load Prog",
 			new String[]{ "bin",		"cdp1802" },
 			new String[]{ "CDP1802 binary", "CDP1802 Core Dump" },
-			null, null, _last_core, true);
+			_last_core, load_pn);
 		int rv = ch.showDialog(_main);
 		_main.requestFocus();
 		if (rv != JFileChooser.APPROVE_OPTION) {
@@ -310,7 +313,7 @@ public class ELFOperator implements ActionListener, Runnable
 		}
 		_last_core = ch.getSelectedFile();
 		String core = _last_core.getAbsolutePath();
-		String cmd = "load core " + core;
+		String cmd = String.format("load core %s %s", core, load_adr.getText());
 		Vector<String> resp = _cmdr.sendCommand(cmd);
 		if (!resp.get(0).equals("ok")) {
 			error(_main, cmd, join(resp));
@@ -321,7 +324,7 @@ public class ELFOperator implements ActionListener, Runnable
 		SuffFileChooser ch = new SuffFileChooser("Core Dump",
 			new String[]{ "cdp1802" },
 			new String[]{ "CDP1802 Core Dump" },
-			null, null, _last_core, true);
+			_last_core, null);
 		int rv = ch.showDialog(_main);
 		_main.requestFocus();
 		if (rv != JFileChooser.APPROVE_OPTION) {
@@ -337,7 +340,6 @@ public class ELFOperator implements ActionListener, Runnable
 	}
 
 	private void doDumpPageDialog() {
-		dump_bnk.setText("");
 		dump_pg.setText("");
 		dump_rom.setSelected(false);
 		int res = JOptionPane.showOptionDialog(_main, dmppg_pn,
@@ -354,9 +356,6 @@ public class ELFOperator implements ActionListener, Runnable
 		}
 		if (dump_rom.isSelected()) {
 			cmd += "rom ";
-		}
-		if (dump_bnk.getText().length() > 0) {
-			cmd += dump_bnk.getText() + " ";
 		}
 		cmd += dump_pg.getText();
 		Vector<String> r = _cmdr.sendCommand(cmd);
@@ -550,9 +549,9 @@ public class ELFOperator implements ActionListener, Runnable
 			if (key == _copy_key) {
 				Vector<String> r = _cmdr.sendCommand("copy rom");
 				if (!r.get(0).equals("ok")) {
-					error(_main, "Copy ROM", join(r));
+					error(_main, "Copy PROM", join(r));
 				} else {
-					handleResp("Copy ROM", r);
+					handleResp("Copy PROM", r);
 				}
 				continue;
 			}
@@ -592,16 +591,22 @@ public class ELFOperator implements ActionListener, Runnable
 	}
 
 	static public void error(JFrame main, String op, String err) {
-                JOptionPane.showMessageDialog(main,
-                        new JLabel(err),
-                        op + " Information", JOptionPane.ERROR_MESSAGE);
-        }
+		JOptionPane.showMessageDialog(main,
+			new JLabel(err),
+			op + " Error", JOptionPane.ERROR_MESSAGE);
+	}
+
+	static public void warn(JFrame main, String op, String err) {
+		JOptionPane.showMessageDialog(main,
+			new JLabel(err),
+			op + " Warning", JOptionPane.WARNING_MESSAGE);
+	}
 
 	static public void inform(JFrame main, String op, String err) {
-                JOptionPane.showMessageDialog(main,
-                        new JLabel(err),
-                        op + " Information", JOptionPane.INFORMATION_MESSAGE);
-        }
+		JOptionPane.showMessageDialog(main,
+			new JLabel(err),
+			op + " Information", JOptionPane.INFORMATION_MESSAGE);
+	}
 
 	public void resetPerformed() {
 		_cmds.add(_reset_key);

@@ -33,8 +33,11 @@ public class ELFMemory extends ELFRoms implements Memory {
 		}
 		mem = new byte[ramsize];
 		mask = ramsize - 1;	// only works for powers of two
-		// RAM must be >= ROM size...
-		//Arrays.fill(mem, (byte)0x30);
+		System.err.format("RAM is %d bytes\n", ramsize);
+		// RAM must be > ROM size to be practical
+		if (ramsize <= monSize) {
+			System.err.format("Warning: no RAM available if PROM selected\n");
+		}
 	}
 
 	public int read(boolean rom, int address) {
@@ -65,6 +68,11 @@ public class ELFMemory extends ELFRoms implements Memory {
 
 	public void copy() {
 		if (monSize > 0) {
+			if (mem.length < monSize) {
+				ELFOperator.error(null, "Copy PROM to RAM",
+						"PROM larger than RAM");
+				return;
+			}
 			System.arraycopy(mon, 0, mem, 0, monSize);
 		}
 	}
@@ -72,6 +80,12 @@ public class ELFMemory extends ELFRoms implements Memory {
 	public void load(String file, int adr) {
 		try {
 			InputStream core = new FileInputStream(file);
+			int len = core.available();
+			if (adr + len > mem.length) {
+				ELFOperator.error(null, "Load Prog",
+					"Program overflows RAM");
+				return;
+			}
 			core.read(mem, adr, mem.length - adr);
 			core.close();
 		} catch (Exception ee) {

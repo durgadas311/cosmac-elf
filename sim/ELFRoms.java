@@ -23,7 +23,7 @@ public class ELFRoms {
 				mon = new byte[monSize];
 				fi.read(mon);
 				fi.close();
-				System.err.format("PROM loaded %d bytes from %s\n",
+				System.err.format("PROM is %d bytes loaded from %s\n",
 						monSize, s);
 			} catch (Exception ee) {
 				ee.printStackTrace();

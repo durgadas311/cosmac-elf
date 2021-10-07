@@ -385,9 +385,13 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 				}
 				return ret;
 			}
-			if (args[0].equalsIgnoreCase("load") && args.length > 1) {
-				// assume load core (prog)...
-				mem.load(args[2], 0);
+			if (args[0].equalsIgnoreCase("load") && args.length > 2) {
+				// assume load core (prog) [adr]
+				int adr = 0;
+				if (args.length > 3) {
+					adr = Integer.valueOf(args[3], 16);
+				}
+				mem.load(args[2], adr);
 				return ret;
 			}
 			if (args[0].equalsIgnoreCase("copy") && args.length > 1) {
