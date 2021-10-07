@@ -1,0 +1,95 @@
+                        ; EHOPS-256
+                        ; Monitor program using hex keypad for data input.
+                        ; Enter mode in switches, start program.
+                        ; Enter address on hex keypad.
+                        
+                        ; 00000000 = GO: jump to address.
+                        ; xxxxxxx1 = VIEW: wait for any two digits, show bytes at address...
+                        ; yyyyyyy0 = STORE: wait for two digits, put bytes to address...
+                        ; (x = don't care)
+                        ; (y = at least one switch "1")
+                        
+   0000                 	org	0
+   0000   f8 ff         	ldi	work.0
+   0002   a2            	plo	2	; R(2) = work
+   0003   f8 23         	ldi	b$sub.0
+   0005   a5            	plo	5	; R(5) = b$sub
+   0006   f8 33         	ldi	h$sub.0
+   0008   a6            	plo	6	; R(6) = h$sub
+   0009   f8 0d         	ldi	main
+   000b   a3            	plo	3	; R(3) = main
+   000c   d3            	sep	3	; jump to R(3)
+   000d                 main:
+   000d   d5            	sep	5	; call R(5) [b$sub]
+   000e   a1            	plo	1	; R(1) = b$sub();
+   000f   6c            	inp	4	; 
+   0010   3a 14         	bnz	main1
+                        	; 00000000 = GO
+   0012   81            go:	glo	1
+   0013   a3            	plo	3	; R(3) = R(1): jump R(1)
+                        
+   0014   f6            main1:	shr
+   0015   3b 1c         	bnf	store
+                        	; xxxxxxx1 = VIEW
+   0017   d5            view:	sep	5	; call b$sub
+   0018   e1            	sex	1	;
+   0019   64            	out	4	; show address
+   001a   30 17         	br	view
+                        
+                        	; yyyyyyy0 = STORE
+   001c   d5            store:	sep	5	; call b$sub
+   001d   e1            	sex	1
+   001e   51            	str	1
+   001f   64            	out	4
+   0020   30 1c         	br	store
+                        
+                        ; Get byte (two digits) from hex keypad.
+                        ; Returns D = byte, also M(R(2)) = byte, and displayed.
+                        ; Uses R(0).0, calls h$sub
+   0022   d3            b$ret:	sep	3	; return to main
+   0023   d6            b$sub:	sep	6	; call h$sub
+   0024   fe            	shl
+   0025   fe            	shl
+   0026   fe            	shl
+   0027   fe            	shl
+   0028   a0            	plo	0	; save high digit
+   0029   d6            	sep	6	; call h$sub
+   002a   80            	glo	0	; D = high digit
+   002b   f1            	or		; D |= M(R(X))
+   002c   52            	str	2	; M(R(2)) = byte entered
+   002d   64            	out	4	; show byte
+   002e   22            	dec	2	; adjust for OUT
+   002f   30 22         	br	b$ret	; return
+                        
+                        ; Get digit from hex keypad.
+                        ; Returns D = digit.
+                        ; Changes X, uses M(R(2)) and R(4)
+   0031   f0            h$ret:	ldx		; D = M(R(X)) (digit)
+   0032   d5            	sep	5	; return to b$sub
+   0033   e2            h$sub:	sex	2
+   0034   fc 01         	adi	1
+   0036   fa 0f         	ani	0fh
+   0038   52            	str	2
+   0039   62            	out	2	; keypad index
+   003a   22            	dec	2	; adjust for OUT
+   003b   3d 33         	bn2	h$sub	; loop until key pressed
+   003d   7b            	seq
+   003e   f8 09         	ldi	9
+   0040   b4            	phi	4
+   0041   24            delay:	dec	4
+   0042   94            	ghi	4
+   0043   3a 41         	bnz	delay	; debounce 2048 loops
+   0045   7a            	req
+   0046   35 46         	b2	$.0	; wait for key released
+   0048   30 31         	br	h$ret	; return
+                        
+   00ff                 work	equ	0ffh	; user must enter address anyway
+                        
+                        ; User programs from
+                        ; M(4A) to M(FF)
+                        
+   004a                 	end
+0022  b$ret         0023  b$sub         0041  delay         0012  go        
+0031  h$ret         0033  h$sub         000d  main          0014  main1     
+001c  store         0017  view          00ff  work          
+
