@@ -1,0 +1,52 @@
+                        ; ETOPS-256
+                        ; "monitor" program, for entering and running programs,
+                        ; using toggle switches and IN button.
+                        ;
+                        ; User sets switches for mode... 00, 01, XX
+                        ; User starts this program (RUN).
+                        ; Mode is displayed, waits for IN...
+                        ;
+                        ; 00000000 = GO: wait for IN, read address, jump to address.
+                        ; xxxxxxx1 = VIEW: wait for IN, read address, show bytes at address...
+                        ; yyyyyyy0 = STORE: wait for IN, read address, input bytes to address...
+                        ; (x = don't care)
+                        ; (y = at least one switch "1")
+                        ;
+                        ; mode is diplayed when starting, Q LED "on" when writing to memory.
+                        
+   0000                 	org	0
+   0000   f8 20         	ldi	work.0
+   0002   a1            	plo	1	; R(1) = work
+   0003   e1            	sex	1	; X=1
+   0004   6c            	inp	4	; M(R(X)) = D = switches: mode
+   0005   64            	out	4	; show current mode value
+   0006   21            	dec	1	; correct for OUT
+                        	; user sets switches for address, presses IN...
+   0007   3f 07         	bn4	$.0	; Wait for IN on
+   0009   37 09         	b4	$.0	; Wait for IN off
+   000b   32 1d         	bz	go	; GO command
+   000d   f6            	shr		;
+   000e   33 11         	bdf	view	; VIEW command
+   0010   7b            	seq		; Q=1 - writing to memory
+   0011   6c            view:	inp	4	; D = toggles
+   0012   a1            	plo	1	; R(1) = address to put/view data (program)
+   0013   3f 13         loop:	bn4	$.0	; Wait for IN on
+   0015   37 15         	b4	$.0	; Wait for IN off
+   0017   39 1a         	bnq	view1	; if Q=0, skip new data
+   0019   6c            	inp	4	; M(R(X)) = toggles
+   001a   64            view1:	out	4	; Show M(R(X)++)
+   001b   30 13         	br	loop	; Repeat
+                        
+   001d   6c            go:	inp	4	; D = toggles (also M(R(X)))
+   001e   a3            	plo	3	; R(3) = address
+   001f   d3            	sep	3	; P=3, jump to M(R(3))
+                        	; end of 32-byte PROM
+   0020                 work:	;ds	1	; Work area (destroyed)
+                        
+                        ; User programs from
+                        ; M(21) to M(FF)
+                        
+   0020                 	end
+001d  go            0013  loop          0011  view          001a  view1     
+0020  work          
+
