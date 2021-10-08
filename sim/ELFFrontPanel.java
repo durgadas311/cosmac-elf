@@ -283,9 +283,9 @@ public class ELFFrontPanel extends JPanel
 			if (auto) {
 				btns[PROM].setSelected(true);
 			}
+			intr.setSwitch(PROM, btns[PROM].isSelected());
 		}
 		// Now safe to do this?
-		intr.setSwitch(PROM, btns[PROM].isSelected());
 		intr.setSwitch(LOAD, btns[LOAD].isSelected());
 		intr.setSwitch(RUN, btns[RUN].isSelected());
 		System.err.format("ELFFrontPanel at port %d mask %d EF%d\n",

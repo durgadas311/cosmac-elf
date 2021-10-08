@@ -38,6 +38,18 @@ public class ELFMemory extends ELFRoms implements Memory {
 		if (ramsize <= monSize) {
 			System.err.format("Warning: no RAM available if PROM selected\n");
 		}
+		s = props.getProperty("preload");
+		if (s != null) {
+			String[] ss = s.split("\\s");
+			int adr = 0;
+			if (ss.length > 1) {
+				adr = Integer.valueOf(ss[1], 16);
+			}
+			Exception ee = _load(ss[0], adr);
+			if (ee != null) {
+				System.err.format("preload %s: %s\n", s, ee.getMessage());
+			}
+		}
 	}
 
 	public int read(boolean rom, int address) {
@@ -77,18 +89,24 @@ public class ELFMemory extends ELFRoms implements Memory {
 		}
 	}
 
-	public void load(String file, int adr) {
+	public Exception _load(String file, int adr) {
 		try {
 			InputStream core = new FileInputStream(file);
 			int len = core.available();
 			if (adr + len > mem.length) {
-				ELFOperator.error(null, "Load Prog",
-					"Program overflows RAM");
-				return;
+				return new RuntimeException("Program overflows RAM");
 			}
 			core.read(mem, adr, mem.length - adr);
 			core.close();
 		} catch (Exception ee) {
+			return ee;
+		}
+		return null;
+	}
+
+	public void load(String file, int adr) {
+		Exception ee = _load(file, adr);
+		if (ee != null) {
 			ELFOperator.error(null, "Load Prog", ee.getMessage());
 		}
 	}
