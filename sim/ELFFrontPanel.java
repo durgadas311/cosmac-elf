@@ -78,6 +78,8 @@ public class ELFFrontPanel extends JPanel
 				efn = n - 1;
 			}
 		}
+		s = props.getProperty("autorun");
+		boolean auto = (s != null);
 
 		tiny = new Font("Sans-serif", Font.PLAIN, 8);
 		lesstiny = new Font("Sans-serif", Font.PLAIN, 10);
@@ -189,7 +191,9 @@ public class ELFFrontPanel extends JPanel
 		// [LOAD] button
 		gc.gridy = 5;
 		gc.gridx = 2;
-		btns[LOAD].setSelected(true);
+		if (!auto) {
+			btns[LOAD].setSelected(true);
+		}
 		btns[LOAD].addMouseListener(this);
 		gb.setConstraints(btns[LOAD], gc);
 		add(btns[LOAD]);
@@ -204,6 +208,9 @@ public class ELFFrontPanel extends JPanel
 		// [RUN] button
 		gc.gridy = 5;
 		gc.gridx = 8;
+		if (auto) {
+			btns[RUN].setSelected(true);
+		}
 		btns[RUN].addMouseListener(this);
 		gb.setConstraints(btns[RUN], gc);
 		add(btns[RUN]);
@@ -273,10 +280,14 @@ public class ELFFrontPanel extends JPanel
 			gc.gridwidth = 8;
 			gb.setConstraints(pan, gc);
 			add(pan);
+			if (auto) {
+				btns[PROM].setSelected(true);
+			}
 		}
 		// Now safe to do this?
-		intr.setSwitch(RUN, btns[RUN].isSelected());
+		intr.setSwitch(PROM, btns[PROM].isSelected());
 		intr.setSwitch(LOAD, btns[LOAD].isSelected());
+		intr.setSwitch(RUN, btns[RUN].isSelected());
 		System.err.format("ELFFrontPanel at port %d mask %d EF%d\n",
 			ioa, iom, efn + 1);
 	}
