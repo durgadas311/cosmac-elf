@@ -93,6 +93,7 @@ public class PixieCrt extends JPanel
 		test = (s != null);
 		// Go live...
 		frame.pack();
+		frame.setLocationByPlatform(true);
 		frame.setVisible(true);
 		if (test) {
 			for (int x = 0; x < crt.length; ++x) {

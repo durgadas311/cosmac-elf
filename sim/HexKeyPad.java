@@ -153,6 +153,7 @@ public class HexKeyPad extends JFrame
 
 		pack();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setLocationByPlatform(true);
 		setVisible(true);
 		System.err.format("HexKeyPad at port %d mask %d EF%d\n",
 			ioa, iom, efn + 1);

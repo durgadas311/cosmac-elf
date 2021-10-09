@@ -67,6 +67,7 @@ public class VirtualCOSMAC_ELF {
 		op.setCommander(elf.getCommander());
 
 		front_end.pack();
+		front_end.setLocationByPlatform(true);
 		front_end.setVisible(true);
 
 		elf.reset();
