@@ -20,8 +20,8 @@ public class HexKeyPad extends JFrame
 	private int index = 0;
 	private int src;
 	private int key = -1;
-	private int ioa = 0x010;
-	private int iom = 0x010;
+	private int ioa = 0b010;
+	private int iom = 0b010;
 	private int efn = 1;
 
 	public HexKeyPad(Properties props, Interruptor intr) {
@@ -154,6 +154,8 @@ public class HexKeyPad extends JFrame
 		pack();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
+		System.err.format("HexKeyPad at port %d mask %d EF%d\n",
+			ioa, iom, efn + 1);
 	}
 
 	// IODevice
