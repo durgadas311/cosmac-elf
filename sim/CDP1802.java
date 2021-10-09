@@ -238,6 +238,7 @@ public class CDP1802 {
 	}
 
 	private void changeQ(boolean on) {
+		Q = on;
 		computerImpl.setQ(on);
 	}
 

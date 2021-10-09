@@ -1,0 +1,61 @@
+<HTML>
+<HEAD>
+<TITLE>Example program: mdump</TITLE>
+</HEAD>
+<BODY>
+<H3>Example program: mdump</H3>
+
+<P>mdump is a simple memory editor that uses the hex keypad and
+pixie graphic display. The code consumes less than 512 bytes and may be run
+from PROM.
+The program requires at least 2K of RAM
+(RAM must extended beyond the program up to addess 07FF).
+The video mode used is 64x128, in order to avoid excessive overhead
+in the refresh interrupt routine thus allowing non-refresh
+code a larger percentage of the CPU.
+The characters displayed use a 64x64 style to make them less "squashed".
+
+<P>The following operations are supported:
+<UL>
+<LI>Step forward one location.
+<LI>Step backward one location.
+<LI>Modify data at current address.
+<LI>Modify current address.
+</UL>
+
+<P>Detailed operation is as follows:
+<DL>
+<DT>Step forward one location</DT>
+<DD>Press the IN button (with toggle switch "7" off).</DD>
+<DT>Step backward one location</DT>
+<DD>Press the IN button with toggle switch "7" on.</DD>
+<DT>Modify data at current address</DT>
+<DD>Press a key on the keypad (with toggle switch "0" off).
+The current memory location is shifted left one digit and the
+value of the pressed key is added. In other words:<BR>
+<PRE>M(adr) = (M(adr) &lt;&lt; 4) | key</PRE>
+</DD>
+<DT>Modify current address</DT>
+<DD>Press a key on the keypad with toggle switch "0" on.
+The current address is shifted left one digit and the
+value of the pressed key is added. In other words:<BR>
+<PRE>adr = (adr &lt;&lt; 4) | key</PRE>
+Note that, while entering an address, the current address
+may temporarily be invalid and display memory that does not exist.
+Once all four digits have been entered, the address should be complete.
+</DD>
+</DL>
+
+<P>The following properties will setup the simulator to run this program:
+<PRE>
+ram=2k
+hexkeypad
+pixie
+prom=mdump.bin
+</PRE>
+
+<P>In addition, 'autorun' could be used to start the simulator in the RUN mode.
+Also, "preload=mdump.bin" could be used instead of "prom=mdump.bin" to
+cause the program to be loaded into RAM, and cause no PROM to be configured.
+</BODY>
+</HTML>
