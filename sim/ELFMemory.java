@@ -21,14 +21,11 @@ public class ELFMemory extends ELFRoms implements Memory {
 				s = s.substring(0, s.length() - 1);
 			}
 			ramsize = Integer.valueOf(s) * mult;
-			if ((ramsize & (ramsize - 1)) != 0) {
-				int n = 32 - Integer.numberOfLeadingZeros(ramsize);
-				if (n < 9) n = 9;
-				if (n > 17) n = 17;
-				ramsize = (1 << n);	// next larger
-				System.err.format(
-					"RAM size is not power-of-two, using %d\n",
-					ramsize);
+			if ((ramsize & 0x00ff) != 0) {
+				// force multiple of 256.
+				// TODO: should be scaled to ramsize?
+				ramsize = (ramsize + 255) & ~255;
+				System.err.format("RAM size forced to %d\n", ramsize);
 			}
 		}
 		mem = new byte[ramsize];
