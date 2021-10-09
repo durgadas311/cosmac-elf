@@ -401,53 +401,53 @@ public class CDP1802 {
 			decr(T);
 			break;
 		case 0x30:	// BR (short)
-			setR_0(regP, fetch8());
+			setR_0(regP, peek8(regP));
 			break;
 		case 0x31:	// BQ (short)
 			if (Q) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x32:	// BZ (short)
 			if (regD == 0) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x33:	// BDF (short)
 			if (DF) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x34:	// B1 (short)
 			if (EF[0]) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x35:	// B2 (short)
 			if (EF[1]) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x36:	// B3 (short)
 			if (EF[2]) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x37:	// B4 (short)
 			if (EF[3]) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
@@ -457,49 +457,49 @@ public class CDP1802 {
 			break;
 		case 0x39:	// BNQ (short)
 			if (!Q) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x3a:	// BNZ (short)
 			if (regD != 0) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x3b:	// BNF (short)
 			if (!DF) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x3c:	// BN1 (short)
 			if (!EF[0]) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x3d:	// BN2 (short)
 			if (!EF[1]) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x3e:	// BN3 (short)
 			if (!EF[2]) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
 			break;
 		case 0x3f:	// BN4 (short)
 			if (!EF[3]) {
-				setR_0(regP, fetch8());
+				setR_0(regP, peek8(regP));
 			} else {
 				incr(regP);
 			}
