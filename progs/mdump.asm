@@ -5,8 +5,9 @@
 ; starts by displaying location 0000 address and contents.
 ; Press IN with toggle 7 off to step +1.
 ; Press IN with toggle 7 on to step -1.
-; TODO: ... enter address from hex keypad (4 keys?)
-; TODO: ... alter location from hex keypad (2 keys?)
+; Press a hex key with toggle 0 on to change address
+; Press a hex key with toggle 0 off to alter data
+; Press IN with toggle 1 on to GOTO current address
 
 double	equ	1	; use double-lines in video
 hexinp	equ	1	; use hex keypad for data input, else only IN +/- step
@@ -14,7 +15,7 @@ hexinp	equ	1	; use hex keypad for data input, else only IN +/- step
 ; video RAM buffer must be aligned...
 ; Registers:
 s$intr	equ	1	; interrupt routine (always R(1))
-s$stk	equ	2	; stack are for interrupt
+s$stk	equ	2	; stack area for interrupt
 s$main	equ	3	; R(3) = main...
 s$scr	equ	4	; scratch-pad area - keypad index, X
 s$key	equ	5	; R(5) = keypd
@@ -163,6 +164,36 @@ putc0:
 	bnz	putc0
 	br	r$putc
 
+; Display hex digit (nibble) on screen at V
+; Only called from 'byte'
+r$nib:	sep	s$byt
+nibble:
+	ani	0fh
+	; D = nibble (0-15)
+	shl
+	shl
+	shl	; D *= 8
+	adi	hextbl.0
+	plo	C
+	ldi	hextbl.1
+	adci	0	; C = &hextbl[key]
+	phi	C
+	; R(C) = character pattern
+	sep	s$putc
+	br	r$nib
+
+r$byt:	sep	s$main	; only called from main
+byte:	; D = byte
+	phi	cnt	; safe?
+	shr
+	shr
+	shr
+	shr
+	sep	s$nib
+	ghi	cnt
+	sep	s$nib
+	br	r$byt
+
 main:
 	; setup video...
 	inp	1	; enable video
@@ -225,41 +256,25 @@ input:	req
 	inp	4	; get switches - destroys M(R(X))!
 	shlc		; switch 7 "on"?
 	bdf	back
+	ani	00000100b	; switch 1 in new position
+	bnz	goto
 	; forward step...
 	inc	s$ptr
 	br	loop
 back:	dec	s$ptr
 	br	loop
-
-; Display hex digit (nibble) on screen at V
-; Only called from 'byte'
-r$nib:	sep	s$byt
-nibble:
-	ani	0fh
-	; D = nibble (0-15)
-	shl
-	shl
-	shl	; D *= 8
-	adi	hextbl.0
-	plo	C
-	ldi	hextbl.1
-	adci	0	; C = &hextbl[key]
-	phi	C
-	; R(C) = character pattern
-	sep	s$putc
-	br	r$nib
-
-r$byt:	sep	s$main	; only called from main
-byte:	; D = byte
-	phi	cnt	; safe?
-	shr
-	shr
-	shr
-	shr
-	sep	s$nib
-	ghi	cnt
-	sep	s$nib
-	br	r$byt
+goto:	; transition to temp PC, then setup s$main
+	ldi	goto0.0
+	plo	s$scr
+	ldi	goto0.1
+	phi	s$scr
+	sep	s$scr
+	page	; we're too close to end of page 0...
+goto0:	glo	s$ptr
+	plo	s$main
+	ghi	s$ptr
+	phi	s$main
+	sep	s$main	; goto R(ptr), PC=3
 
 ; The character generator:
 hextbl:

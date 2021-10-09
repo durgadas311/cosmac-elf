@@ -21,6 +21,7 @@ The characters displayed use a 64x64 style to make them less "squashed".
 <LI>Step backward one location.
 <LI>Modify data at current address.
 <LI>Modify current address.
+<LI>Go to (execute) current address.
 </UL>
 
 <P>Detailed operation is as follows:
@@ -43,6 +44,13 @@ value of the pressed key is added. In other words:<BR>
 Note that, while entering an address, the current address
 may temporarily be invalid and display memory that does not exist.
 Once all four digits have been entered, the address should be complete.
+</DD>
+<DT>Go to current address</DT>
+<DD>Press the IN button with toggle switch "1" on.
+The current address is transferred to R(3) and P is set to 3.
+The video chip is still active and R(0), R(1), and R(2) must
+be preserved to allow proper operation. There seems to be no
+way to disable the pixie chip programatically.
 </DD>
 </DL>
 
