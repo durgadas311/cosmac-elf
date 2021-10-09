@@ -1,0 +1,316 @@
+                        ; Program to display (on pixie) keys pressed on hexkeypad
+                        ; requires at least 2K of RAM (uses 1K video buffer at 0400h).
+                        
+   0001                 double	equ	1	; use double-lines in video
+                        
+                        ; video RAM buffer must be aligned...
+                        ; Registers:
+   0001                 s$intr	equ	1	; interrupt routine (always R(1))
+   0002                 s$stk	equ	2	; stack are for interrupt
+   0003                 s$main	equ	3	; R(3) = main...
+   0004                 s$scr	equ	4	; scratch-pad area - keypad index, X
+   0005                 s$key	equ	5	; R(5) = h$sub
+   0007                 s$putc	equ	7	; R(7) = putc
+   000c                 C	equ	12	; character pattern from table
+   000d                 V	equ	13	; current video location (init: col(0)+7)
+   000e                 tmp	equ	14
+   000f                 cnt	equ	15
+                        
+   0000                 	org	0
+                        ;----------------------------------
+                        ; initialize
+   0000   f8 15         	ldi	scratch.0
+   0002   a4            	plo	s$scr
+   0003   f8 01         	ldi	scratch.1
+   0005   b4            	phi	s$scr
+   0006   e4            	sex	s$scr
+   0007   f8 39         	ldi	h$sub.0
+   0009   a5            	plo	s$key
+   000a   f8 00         	ldi	h$sub.1
+   000c   b5            	phi	s$key
+   000d   f8 51         	ldi	putc.0
+   000f   a7            	plo	s$putc
+   0010   f8 00         	ldi	putc.1
+   0012   b7            	phi	s$putc
+   0013   f8 28         	ldi	intr.0
+   0015   a1            	plo	s$intr
+   0016   f8 00         	ldi	intr.1
+   0018   b1            	phi	s$intr
+   0019   f8 07         	ldi	(video+7).0
+   001b   ad            	plo	V
+   001c   f8 04         	ldi	(video+7).1
+   001e   bd            	phi	V
+                        	; transfer control to main (new PC)
+   001f   f8 80         	ldi	main.0
+   0021   a3            	plo	s$main
+   0022   f8 00         	ldi	main.1
+   0024   b3            	phi	s$main
+   0025   d3            	sep	s$main
+                        ;
+                        ; video refresh interrupt
+   0026   72            r$intr:	ldxa
+   0027   70            	ret
+   0028   22            intr:	dec	s$stk
+   0029   78            	sav
+   002a   22            	dec	s$stk
+   002b   52            	str	s$stk
+   002c   c4            	nop
+   002d   c4            	nop
+   002e   c4            	nop
+   002f   f8 04         	ldi	video.1
+   0031   b0            	phi	0
+   0032   f8 00         	ldi	video.0
+   0034   a0            	plo	0
+   0035   30 26         	br	r$intr
+                        
+                        ; Get digit from hex keypad.
+                        ; Returns D = digit.
+                        ; Changes X, uses M(R(2)) and R(4)
+   0037   f0            h$ret:	ldx		; D = M(R(X)) (digit)
+   0038   d3            	sep	s$main	; return to main
+   0039   f0            h$sub:	ldx
+   003a   fc 01         	adi	1
+   003c   fa 0f         	ani	0fh
+   003e   54            	str	s$scr
+   003f   62            	out	2	; keypad index
+   0040   24            	dec	s$scr	; adjust for OUT
+   0041   3d 39         	bn2	h$sub	; loop until key pressed
+   0043   7b            	seq
+   0044   f8 09         	ldi	9
+   0046   be            	phi	tmp	; 9*256
+   0047   2e            delay:	dec	tmp
+   0048   9e            	ghi	tmp
+   0049   3a 47         	bnz	delay	; debounce 2048 loops
+   004b   35 4b         	b2	$.0	; wait for key released
+   004d   7a            	req
+   004e   30 37         	br	h$ret	; return
+                        
+   0050   d3            r$putc:	sep	s$main	; back to main
+   0051   9d            putc:	ghi	V
+   0052   be            	phi	tmp	; tmp = V
+                        
+                        	; advance to next location...
+   0053   1d            	inc	V	; ++V
+   0054   8d            	glo	V
+   0055   fa 07         	ani	07h
+   0057   3a 69         	bnz	skip
+   0059   8d            	glo	V
+   005a   ff 08         	smi	8
+   005c   ad            	plo	V
+                        	; clear screen line
+   005d   ae            	plo	tmp
+   0001                  if double
+   005e   f8 80         	ldi	128
+                         else
+                        	ldi	64
+                         endi
+   0060   af            	plo	cnt
+   0061   f8 00         clear:	ldi	0
+   0063   5e            	str	tmp
+   0064   1e            	inc	tmp
+   0065   2f            	dec	cnt
+   0066   8f            	glo	cnt
+   0067   3a 61         	bnz	clear
+   0069                 skip:
+   0069   8d            	glo	V
+   006a   ae            	plo	tmp	; tmp = V
+   006b   f8 08         	ldi	8
+   006d   af            	plo	cnt
+   006e                 copy:
+   0001                  if double
+   006e   0c            	ldn	C	; D = M(R(C))
+   006f   5e            	str	tmp
+   0070   8e            	glo	tmp
+   0071   fc 08         	adi	8
+   0073   ae            	plo	tmp	; tmp += 8
+                         endi
+   0074   4c            	lda	C	; D = M(R(C)++)
+   0075   5e            	str	tmp
+   0076   8e            	glo	tmp
+   0077   fc 08         	adi	8
+   0079   ae            	plo	tmp	; tmp += 8
+   007a   2f            	dec	cnt
+   007b   8f            	glo	cnt
+   007c   3a 6e         	bnz	copy
+   007e   30 50         	br	r$putc
+                        
+   0080                 main:
+                        	; setup video...
+   0080   69            	inp	1	; enable video
+                        
+   0081   d5            loop:	sep	s$key	; call b$sub
+                        	; D = key (0-15)
+   0082   fe            	shl
+   0083   fe            	shl
+   0084   fe            	shl	; D *= 8
+   0085   fc 90         	adi	hextbl.0
+   0087   ac            	plo	C
+   0088   f8 00         	ldi	hextbl.1
+   008a   7c 00         	adci	0	; C = &hextbl[key]
+   008c   bc            	phi	C
+                        	; R(C) = character pattern
+   008d   d7            	sep	s$putc
+   008e   30 81         	br	loop
+                        
+                        ; The character generator:
+   0090                 hextbl:
+                        	; "0"
+   0090   70            	db	01110000b
+   0091   88            	db	10001000b
+   0092   98            	db	10011000b
+   0093   a8            	db	10101000b
+   0094   c8            	db	11001000b
+   0095   88            	db	10001000b
+   0096   70            	db	01110000b
+   0097   00            	db	0
+                        	; "1"
+   0098   20            	db	00100000b
+   0099   60            	db	01100000b
+   009a   20            	db	00100000b
+   009b   20            	db	00100000b
+   009c   20            	db	00100000b
+   009d   20            	db	00100000b
+   009e   70            	db	01110000b
+   009f   00            	db	0
+                        	; "2"
+   00a0   70            	db	01110000b
+   00a1   88            	db	10001000b
+   00a2   08            	db	00001000b
+   00a3   70            	db	01110000b
+   00a4   80            	db	10000000b
+   00a5   80            	db	10000000b
+   00a6   f8            	db	11111000b
+   00a7   00            	db	0
+                        	; "3"
+   00a8   70            	db	01110000b
+   00a9   88            	db	10001000b
+   00aa   08            	db	00001000b
+   00ab   70            	db	01110000b
+   00ac   08            	db	00001000b
+   00ad   88            	db	10001000b
+   00ae   70            	db	01110000b
+   00af   00            	db	0
+                        	; "4"
+   00b0   18            	db	00011000b
+   00b1   28            	db	00101000b
+   00b2   48            	db	01001000b
+   00b3   f8            	db	11111000b
+   00b4   08            	db	00001000b
+   00b5   08            	db	00001000b
+   00b6   08            	db	00001000b
+   00b7   00            	db	0
+                        	; "5"
+   00b8   f8            	db	11111000b
+   00b9   80            	db	10000000b
+   00ba   80            	db	10000000b
+   00bb   f0            	db	11110000b
+   00bc   08            	db	00001000b
+   00bd   88            	db	10001000b
+   00be   70            	db	01110000b
+   00bf   00            	db	0
+                        	; "6"
+   00c0   30            	db	00110000b
+   00c1   40            	db	01000000b
+   00c2   80            	db	10000000b
+   00c3   f0            	db	11110000b
+   00c4   88            	db	10001000b
+   00c5   88            	db	10001000b
+   00c6   70            	db	01110000b
+   00c7   00            	db	0
+                        	; "7"
+   00c8   f8            	db	11111000b
+   00c9   08            	db	00001000b
+   00ca   08            	db	00001000b
+   00cb   10            	db	00010000b
+   00cc   20            	db	00100000b
+   00cd   40            	db	01000000b
+   00ce   80            	db	10000000b
+   00cf   00            	db	0
+                        	; "8"
+   00d0   70            	db	01110000b
+   00d1   88            	db	10001000b
+   00d2   88            	db	10001000b
+   00d3   70            	db	01110000b
+   00d4   88            	db	10001000b
+   00d5   88            	db	10001000b
+   00d6   70            	db	01110000b
+   00d7   00            	db	0
+                        	; "9"
+   00d8   70            	db	01110000b
+   00d9   88            	db	10001000b
+   00da   88            	db	10001000b
+   00db   78            	db	01111000b
+   00dc   08            	db	00001000b
+   00dd   08            	db	00001000b
+   00de   70            	db	01110000b
+   00df   00            	db	0
+                        	; "A"
+   00e0   70            	db	01110000b
+   00e1   88            	db	10001000b
+   00e2   88            	db	10001000b
+   00e3   f8            	db	11111000b
+   00e4   88            	db	10001000b
+   00e5   88            	db	10001000b
+   00e6   88            	db	10001000b
+   00e7   00            	db	0
+                        	; "B"
+   00e8   f0            	db	11110000b
+   00e9   88            	db	10001000b
+   00ea   88            	db	10001000b
+   00eb   f0            	db	11110000b
+   00ec   88            	db	10001000b
+   00ed   88            	db	10001000b
+   00ee   f0            	db	11110000b
+   00ef   00            	db	0
+                        	; "C"
+   00f0   70            	db	01110000b
+   00f1   88            	db	10001000b
+   00f2   80            	db	10000000b
+   00f3   80            	db	10000000b
+   00f4   80            	db	10000000b
+   00f5   88            	db	10001000b
+   00f6   70            	db	01110000b
+   00f7   00            	db	0
+                        	; "D"
+   00f8   f0            	db	11110000b
+   00f9   88            	db	10001000b
+   00fa   88            	db	10001000b
+   00fb   88            	db	10001000b
+   00fc   88            	db	10001000b
+   00fd   88            	db	10001000b
+   00fe   f0            	db	11110000b
+   00ff   00            	db	0
+                        	; "E"
+   0100   f8            	db	11111000b
+   0101   80            	db	10000000b
+   0102   80            	db	10000000b
+   0103   f0            	db	11110000b
+   0104   80            	db	10000000b
+   0105   80            	db	10000000b
+   0106   f8            	db	11111000b
+   0107   00            	db	0
+                        	; "F"
+   0108   f8            	db	11111000b
+   0109   80            	db	10000000b
+   010a   80            	db	10000000b
+   010b   f0            	db	11110000b
+   010c   80            	db	10000000b
+   010d   80            	db	10000000b
+   010e   80            	db	10000000b
+   010f   00            	db	0
+                        
+   0110   00 00 00 00   	db	0,0,0,0
+   0114   00            stack:	db	0
+   0115   00            scratch:	db	0
+                        
+   0400                 video	equ	0400h
+                        
+   0116                 	end
+000c  C             000d  V             0061  clear         000f  cnt       
+006e  copy          0047  delay         0001  double        0037  h$ret     
+0039  h$sub         0090  hextbl        0028  intr          0081  loop      
+0080  main          0051  putc          0026  r$intr        0050  r$putc    
+0001  s$intr        0005  s$key         0003  s$main        0007  s$putc    
+0004  s$scr         0002  s$stk         0115  scratch       0069  skip      
+0114  stack         000e  tmp           0400  video         
+
