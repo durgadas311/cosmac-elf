@@ -15,7 +15,7 @@ hexinp	equ	1	; use hex keypad for data input, else only IN +/- step
 ; video RAM buffer must be aligned...
 ; Registers:
 s$intr	equ	1	; interrupt routine (always R(1))
-s$stk	equ	2	; stack area for interrupt
+s$stk	equ	2	; stack area for interrupt (X in intr)
 s$main	equ	3	; R(3) = main...
 s$scr	equ	4	; scratch-pad area - keypad index, X
 s$key	equ	5	; R(5) = keypd
@@ -62,6 +62,10 @@ cnt	equ	15	; R(cnt).0: clear/putc: should not disturb R(cnt).1
 	plo	s$intr
 	ldi	intr.1
 	phi	s$intr
+	ldi	stack.0
+	plo	s$stk
+	ldi	stack.1
+	phi	s$stk
 	ldi	video.0
 	plo	V
 	ldi	video.1
@@ -269,7 +273,7 @@ goto:	; transition to temp PC, then setup s$main
 	ldi	goto0.1
 	phi	s$scr
 	sep	s$scr
-	page	; we're too close to end of page 0...
+	;page	; if we're too close to end of page 0...
 goto0:	glo	s$ptr
 	plo	s$main
 	ghi	s$ptr
