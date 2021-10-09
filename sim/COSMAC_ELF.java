@@ -255,20 +255,24 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		}
 	}
 
-	public synchronized void setSwitch(int sw, boolean on) {
-		if (sw == ELFFrontPanel.RUN) {
-			cpu.setCLEAR(!on);
-			if (cpu.getState() == CDP1802.State.RESET) {
-				reset();
+	public void setSwitch(int sw, boolean on) {
+		cpuLock.lock(); // This might sleep waiting for CPU to finish 2mS
+		synchronized(this) {
+			if (sw == ELFFrontPanel.RUN) {
+				cpu.setCLEAR(!on);
+				if (cpu.getState() == CDP1802.State.RESET) {
+					reset();
+				}
+			} else if (sw == ELFFrontPanel.LOAD) {
+				cpu.setWAIT(on);
+				if (cpu.getState() == CDP1802.State.RESET) {
+					reset();
+				}
+			} else if (sw == ELFFrontPanel.PROM) {
+				mem.setROM(on);
 			}
-		} else if (sw == ELFFrontPanel.LOAD) {
-			cpu.setWAIT(on);
-			if (cpu.getState() == CDP1802.State.RESET) {
-				reset();
-			}
-		} else if (sw == ELFFrontPanel.PROM) {
-			mem.setROM(on);
 		}
+		cpuLock.unlock();
 	}
 	public void blockInts(int msk) {
 		intMask |= msk;
