@@ -33,7 +33,6 @@ public class VirtualCOSMAC_ELF {
 			FileInputStream cfg = new FileInputStream(rc);
 			props.load(cfg);
 			cfg.close();
-			//System.err.format("Using config in %s\n", rc);
 			props.setProperty("configuration", rc);
 		} catch(Exception ee) {
 			//System.err.format("No config file\n");
@@ -47,22 +46,13 @@ public class VirtualCOSMAC_ELF {
 			props.setProperty(prop, val);
 		}
 
-// TODO: optional CDP1861 VDC
-//		boolean isH8 = H89.isH8(props);
-//		String model = isH8 ? "H8" : "H89";
-//
-//		CrtScreen screen = new CrtScreen(props);
-
 		front_end = new JFrame("Virtual COS/MAC ELF Computer");
 		front_end.getContentPane().setName("COS/MAC ELF Emulator");
 		front_end.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		front_end.getContentPane().setBackground(new Color(100, 100, 100));
-//		LEDHandler lh = null;
-//		front_end.add(screen);
 
 		COSMAC_ELF elf = new COSMAC_ELF(props, null); // may add 'screen'...
 		front_end.add(elf.getFrontPanel());
-		// All LEDs should be registered now...
 		ELFOperator op = new ELFOperator(front_end, props);
 		op.setCommander(elf.getCommander());
 
