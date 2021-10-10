@@ -25,7 +25,7 @@ import javax.sound.sampled.*;
 // {..} = jumper
 
 public class ELFFrontPanel extends JPanel
-		implements IODevice, DMAController, MouseListener {
+		implements IODevice, QListener, DMAController, MouseListener {
 	static final int LOAD = 8;	// index/id of LOAD switch
 	static final int MP = 9;	// index/id of MP switch
 	static final int RUN = 10;	// index/id of RUN switch
@@ -55,6 +55,7 @@ public class ELFFrontPanel extends JPanel
 		this.intr = intr;
 		src = intr.registerINT();
 		intr.addDMAController(this);
+		intr.addQListener(this);
 		String s = props.getProperty("elffrontpanel_port");
 		if (s != null) {
 			int n = Integer.valueOf(s);
@@ -356,7 +357,8 @@ public class ELFFrontPanel extends JPanel
 		return dsp;
 	}
 
-	public void setQLed(boolean on) {
+	// QListener
+	public void setQ(boolean on) {
 		qLed.set(on);
 		qLed.repaint();
 	}

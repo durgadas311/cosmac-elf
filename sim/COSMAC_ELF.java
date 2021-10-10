@@ -16,6 +16,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	private Vector<IODevice> devs;
 	private Vector<InterruptController> intrs;
 	private Vector<DMAController> dmas;
+	private Vector<QListener> qbits;
 	private Memory mem;
 	private ELFFrontPanel fp;
 	private boolean running;
@@ -59,6 +60,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		times = new Vector<TimeListener>();
 		intrs = new Vector<InterruptController>();
 		dmas = new Vector<DMAController>();
+		qbits = new Vector<QListener>();
 		efLines = new int[4];
 
 		// Do this early, so we can log messages appropriately.
@@ -292,6 +294,9 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	public void addTimeListener(TimeListener lstn) {
 		times.add(lstn);
 	}
+	public void addQListener(QListener lstn) {
+		qbits.add(lstn);
+	}
 	public void addIntrController(InterruptController ctrl) {
 		// There really should be only zero or one.
 		intrs.add(ctrl);
@@ -510,7 +515,9 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	}
 
 	public void setQ(boolean on) {
-		if (fp != null) fp.setQLed(on);
+		for (QListener lstn : qbits) {
+			lstn.setQ(on);
+		}
 	}
 
 	public int dmaIn() {

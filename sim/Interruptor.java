@@ -20,6 +20,7 @@ public interface Interruptor {
 	void addTimeListener(TimeListener lstn);
 	void addIntrController(InterruptController ctrl);
 	void addDMAController(DMAController ctrl);
+	void addQListener(QListener lstn);
 	void waitCPU();
 	boolean isTracing();
 	void startTracing(int cy);
