@@ -417,6 +417,12 @@ public class ELFOperator implements ActionListener, Runnable
 		}
 		JMenuItem m = (JMenuItem)e.getSource();
 		int key = m.getMnemonic();
+		if (key == _help_key) {
+			if (_help != null) {
+				_help.setVisible(true);
+			}
+			return;
+		}
 		_cmds.add(key);
 	}
 
@@ -567,12 +573,6 @@ public class ELFOperator implements ActionListener, Runnable
 			}
 			if (key == _about_key) {
 				showAbout();
-				continue;
-			}
-			if (key == _help_key) {
-				if (_help != null) {
-					_help.setVisible(true);
-				}
 				continue;
 			}
 			System.err.println("unknown action key");
