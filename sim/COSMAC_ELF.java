@@ -111,9 +111,13 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 			addDevice(new HexKeyPad(props, this));
 		}
 		if (props.getProperty("pixie") != null) {
+			// TODO: setSpeed(17xxxxx)...
 			PixieCrt crt = new PixieCrt(props, this);
 			addDevice(crt);
 			dmas.add(crt);
+		}
+		if (props.getProperty("q_serial") != null) {
+			addDevice(new BitBangSerial(props, this));
 		}
 
 		disas = new CDP1802Disassembler(mem);
@@ -305,6 +309,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		// There really should be only zero or one.
 		dmas.add(ctrl);
 	}
+	public int getSpeed() { return cpuSpeed; }
 	public void waitCPU() {
 		// Keep issuing clock cycles while stalling execution.
 		addTicks(1);

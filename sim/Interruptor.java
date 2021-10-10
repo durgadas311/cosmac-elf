@@ -21,6 +21,7 @@ public interface Interruptor {
 	void addIntrController(InterruptController ctrl);
 	void addDMAController(DMAController ctrl);
 	void addQListener(QListener lstn);
+	int getSpeed();	// CPU raw clock speed (ticks/sec for addTicks())
 	void waitCPU();
 	boolean isTracing();
 	void startTracing(int cy);
