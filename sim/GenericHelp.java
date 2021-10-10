@@ -48,6 +48,7 @@ public class GenericHelp extends JFrame
 		_scroll.setPreferredSize(new Dimension(600, 320));
 		add(_scroll, BorderLayout.CENTER);
 		pack();
+		setLocationByPlatform(true);
 		addWindowListener(this);
 	}
 
