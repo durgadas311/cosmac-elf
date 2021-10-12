@@ -118,7 +118,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 			addDevice(crt);
 			dmas.add(crt);
 		}
-		if (props.getProperty("q_serial") != null) {
+		if (props.getProperty("quart") != null) {
 			addDevice(new BitBangSerial(props, this));
 		}
 
