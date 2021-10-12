@@ -23,6 +23,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	private boolean stopped;
 	private Semaphore stopWait;
 	private boolean tracing;
+	private String traceProp;
 	private int traceCycles;
 	private int traceLow;
 	private int traceHigh;
@@ -99,6 +100,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 				System.err.format("Invalid 'iodecoder' value \"%s\"\n", s);
 			}
 		}
+		traceProp = props.getProperty("trace");
 
 		cpu = new CDP1802(this);
 		mem = new ELFMemory(props);
@@ -143,7 +145,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 			devs.get(x).reset();
 		}
 		if (wasRunning) {
-			start();
+			start(false);
 		}
 	}
 
@@ -164,12 +166,17 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	}
 
 	// These must NOT be called from the thread...
-	public void start() {
+	public void start(boolean por) {
 		stopped = false;
 		if (running) {
 			return;
 		}
 		running = true;
+		if (por && traceProp != null) {
+			Vector<String> ret = new Vector<String>();
+			traceCommand(traceProp.split("\\s"), ret, ret);
+			// TODO: log error?
+		}
 		Thread t = new Thread(this);
 		t.setPriority(Thread.MAX_PRIORITY);
 		t.start();
@@ -431,6 +438,9 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		}
 	}
 
+	// args[0] = "trace"
+	// args[1] = { "on" | "off" | "cycles" | "pc" }
+	// args[2..] = arguments, if any
 	private boolean traceCommand(String[] args, Vector<String> err,
 			Vector<String> ret) {
 		// TODO: do some level of mutexing?
@@ -569,17 +579,18 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 				}
 				if (trace) {
 					++traced;
-					int XX = cpu.getRegXX();
-					traceStr = String.format("{%05d} %04x: %02x %02x %02x %02x " +
-						": %02x %04x %02x %04x <%02x/%02x>%s",
-						clock & 0xffff,
-						PC, mem.read(PC), mem.read(PC + 1),
-						mem.read(PC + 2), mem.read(PC + 3),
-						// TODO: which registers...
-						cpu.getRegD(),XX,mem.read(XX),
-						cpu.getReg(0),
-						intLines, intMask,
-						cpu.isINTLine() ? " INT" : "");
+					traceStr = String.format(
+"{%05d} %04x: %02x %02x %02x : %04x %04x %04x %04x %04x %04x %04x %04x <%02x/%02x>%s\n" +
+"   D=%02x %c X=%x P=%x T=%02x : %04x %04x %04x %04x %04x %04x %04x %04x",
+		clock & 0xffff, PC, mem.read(PC), mem.read(PC + 1), mem.read(PC + 2),
+		cpu.getReg(0), cpu.getReg(1), cpu.getReg(2), cpu.getReg(3),
+		cpu.getReg(4), cpu.getReg(5), cpu.getReg(6), cpu.getReg(7),
+		intLines, intMask, cpu.isINTLine() ? " INT" : "",
+		cpu.getRegD(), cpu.getRegDF() ? 'F' : '-',
+		cpu.getRegX(), cpu.getRegP(), cpu.getRegT(),
+		cpu.getReg(8), cpu.getReg(9), cpu.getReg(10), cpu.getReg(11),
+		cpu.getReg(12), cpu.getReg(13), cpu.getReg(14), cpu.getReg(15)
+		);
 				}
 				clk = cpu.execute();
 				if (clk < 0) {

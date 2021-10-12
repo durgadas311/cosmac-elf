@@ -61,6 +61,6 @@ public class VirtualCOSMAC_ELF {
 		front_end.setVisible(true);
 
 		elf.reset();
-		elf.start(); // spawns its own thread... returns immediately
+		elf.start(true); // spawns its own thread... returns immediately
 	}
 }

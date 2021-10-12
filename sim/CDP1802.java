@@ -51,6 +51,14 @@ public class CDP1802 {
 		return regP;
 	}
 
+	public final int getRegT() {
+		return regT;
+	}
+
+	public final boolean getRegDF() {
+		return DF;
+	}
+
 	public final void setRegP(int value) {
 		regP = value & 0x0f;
 	}
