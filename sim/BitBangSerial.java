@@ -71,6 +71,23 @@ private long lastclk = 0;
 			baud = Integer.valueOf(s);
 			// TODO: normalize/validate BAUD?
 		}
+		s = props.getProperty("quart_qmark");
+		if (s != null) {
+			int n = Integer.valueOf(s);
+			qmark_1 = (n != 0);
+		}
+		s = props.getProperty("quart_efmark");
+		if (s != null) {
+			int n = Integer.valueOf(s);
+			efmark_1 = (n != 0);
+		}
+		s = props.getProperty("quart_nbit");
+		if (s != null) {
+			int n = Integer.valueOf(s);
+			if (n >= 5 && n <= 8) {
+				nbit = n;
+			}
+		}
 		bclk = intr.getSpeed() / baud;
 		mstp = (0b11 << (nbit + 1));	// max 2 STOP bits
 		mbit = (1 << (nbit - 1));
@@ -80,7 +97,10 @@ private long lastclk = 0;
 		}
 
 		intr.setEF(src, efn, efmark_1);	// set MARKing line
-		System.err.format("BitBangSerial at Q, EF%d, %d baud\n", efn + 1, baud);
+		System.err.format("BitBangSerial at Q%c, EF%d%c, %d baud, %dN1\n",
+			qmark_1 ? '+' : '-',
+			efn + 1, efmark_1 ? '+' : '-',
+			baud, nbit);
 	}
 
 	private void attachClass(Properties props, String s) {
@@ -104,6 +124,7 @@ private long lastclk = 0;
 				props,
 				argv,
 				(VirtualUART)this);
+			System.err.format("Q-UART attached %s\n", s);
 		} catch (Exception ee) {
 			System.err.format("Invalid class in attachment: %s\n", s);
 			return;
@@ -212,7 +233,12 @@ private long lastclk = 0;
 	public void out(int port, int value) {}
 	public String getDeviceName() { return "Q-UART"; }
 	public String dumpDebug() {
-		// TODO:
-		return "";
+		String ret = String.format("Q-UART Q%c EF%d%c baud=%d %dN1\n",
+			qmark_1 ? '+' : '-',
+			efn + 1, efmark_1 ? '+' : '-',
+			baud, nbit);
+		ret += String.format("Tx bitc=%d bits=%03x clk=%d\n", tbitc, tbits, tclk);
+		ret += String.format("Rx bitc=%d bits=%03x clk=%d\n", rbitc, rbits, rclk);
+		return ret;
 	}
 }
