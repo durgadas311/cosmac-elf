@@ -877,7 +877,7 @@ public class CDP1802 {
 			break;
 		case 0xf6:	// SHR
 			v = regD;
-			regD = (regD >> 1) ^ 0x7f;
+			regD = (regD >> 1) & 0x7f;
 			DF = (v & 0x01) != 0;
 			break;
 		case 0xf7:	// SM
