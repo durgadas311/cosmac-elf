@@ -1,0 +1,43 @@
+<HTML>
+<HEAD>
+<TITLE>TMSI Tiny BASIC Demo</TITLE>
+</HEAD>
+<BODY>
+<H3>TMSI Tiny BASIC Demo</H3>
+
+<P>A copy of TMSI Tiny BASIC is in progs/tiny_basic/tb0_test.bin.
+<A HREF="http://www.cosmacelf.com/software/">TMSI Tiny BASIC is discussed here</A>,
+and can be
+<A HREF="https://www.retrotechnology.com/memship/mship_tbasic.html">obtained here</A>.
+
+<P>The following configuration may be used to run it:
+<PRE>
+ram = 64k
+quart
+quart_att = "TelnetSerial 192.168.0.0 12345"
+quart_qmark=0
+quart_efmark=0
+preload = tb0_test.bin
+autorun
+</PRE>
+
+<P>Replace "192.168.0.0" with the hostname or IP address of your system,
+and replace "12345" with your favorite port number.
+Once the simulator has been started, you may connect to the IP and port
+using 'telnet' or your favorite program that supports telnet or TCP/IP socket connections.
+<P>Whatever program you use to connect needs to run in a "raw" or "character" mode,
+to avoid lines getting buffered and CR being translated. For telnet, the command
+"mode character" will suffice. This command may also be put in a ~/.telnetrc file
+to avoid having to type it each time telnet is started.
+
+<P>You will need to press CR (carriage return - i.e. ENTER on modern keyboards)
+in order to let Tiny BASIC calculate the serial baud rate and start.
+
+<P>See the documentation at these URLs for information on how to run Tiny BASIC.
+<UL>
+<LI>http://www.cosmacelf.com/software/
+<LI>https://www.retrotechnology.com/memship/mship_tbasic.html
+</UL>
+
+</BODY>
+</HTML>
