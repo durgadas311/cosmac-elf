@@ -1,0 +1,49 @@
+<HTML>
+<HEAD>
+<TITLE>Glass Teletype Operation</TITLE>
+</HEAD>
+<BODY>
+<H3>Glass Teletype Operation</H3>
+
+<P>This serial port attachment is a "dumb terminal" modeled after
+the ASR-33 Teletype.
+
+<P>The following menus and buttons are available:
+<DL>
+<DT>Tape</DT>
+<DD>
+	<DL>
+	<DT>Reader</DT>
+	<DD>Selects file to use as the paper tape reader data.
+	Any currrent file is closed.</DD>
+	<DT>Punch</DT>
+	<DD>Selects file to use as the paper tape reader data.
+	Any currrent file is closed.</DD>
+	</DL>
+</DD>
+<DT>Paper</DT>
+<DD>
+	<DL>
+	<DT>Save</DT>
+	<DD>Selects file to save the text contents of the window into.</DD>
+	<DT>Tear Off</DT>
+	<DD>Clears all text from the window, like rolling up and tearing off
+	the paper on a teletype.</DD>
+	</DL>
+</DD>
+<DT>XON</DT>
+<DD>Starts the paper tape reader, if a file was selected.
+This is essentially the same as the computer sending a ^Q (DC1) character.</DD>
+<DT>XOFF</DT>
+<DD>Stops the paper tape reader.
+This is essentially the same as the computer sending a ^S (DC3) character.</DD>
+<DT>TAPE</DT>
+<DD>Turns on the paper tape punch, if a file was selected.
+This is essentially the same as the computer sending a ^R (DC2) character.</DD>
+<DT>(TAPE)</DT>
+<DD>Turns off the paper tape punch.
+This is essentially the same as the computer sending a ^T (DC4) character.</DD>
+</DL>
+
+</BODY>
+</HTML>

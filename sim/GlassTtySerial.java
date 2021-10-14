@@ -29,8 +29,10 @@ public class GlassTtySerial implements SerialDevice,
 	File last;
 	boolean dc1 = false;
 	FileInputStream reader = null;
+	File last_rdr = null;
 	boolean dc2 = false;
 	FileOutputStream punch = null;
+	File last_pun = null;
 
 	public GlassTtySerial(Properties props, Vector<String> argv, VirtualUART uart) {
 		this.uart = uart;
@@ -215,7 +217,11 @@ public class GlassTtySerial implements SerialDevice,
 		}
 		SuffFileChooser ch = new SuffFileChooser("Reader",
 			new String[]{ "txt" },
-			new String[]{ "Text files" }, last, null);
+			new String[]{ "Text files" },
+			last_rdr != null ? last_rdr : last, null);
+		if (last_rdr != null) {
+			ch.setSelectedFile(last_rdr);
+		}
 		int rv = ch.showDialog(frame);
 		if (rv != JFileChooser.APPROVE_OPTION) {
 			return;
@@ -224,6 +230,7 @@ public class GlassTtySerial implements SerialDevice,
 			File file = ch.getSelectedFile();
 			reader = new FileInputStream(file);
 			last = file;
+			last_rdr = file;
 			DC1.setToolTipText(file.getName());
 			setDC1(false);
 		} catch (Exception ee) {
@@ -240,7 +247,12 @@ public class GlassTtySerial implements SerialDevice,
 		}
 		SuffFileChooser ch = new SuffFileChooser("Punch",
 			new String[]{ "txt" },
-			new String[]{ "Text files" }, last, null);
+			new String[]{ "Text files" },
+			last_pun != null ? last_pun : last, null);
+		// For punch, don't risk overwriting previous file...
+		//if (last_pun != null) {
+		//	ch.setSelectedFile(last_pun);
+		//}
 		int rv = ch.showDialog(frame);
 		if (rv != JFileChooser.APPROVE_OPTION) {
 			return;
@@ -249,6 +261,7 @@ public class GlassTtySerial implements SerialDevice,
 			File file = ch.getSelectedFile();
 			punch = new FileOutputStream(file);
 			last = file;
+			last_pun = file;
 			DC2.setToolTipText(file.getName());
 			setDC2(false);
 		} catch (Exception ee) {
@@ -357,8 +370,9 @@ public class GlassTtySerial implements SerialDevice,
 						synchronized(this) {}
 					}
 					if (dc1) uart.put(c, false);
+					// a generous pause after LF
 					if (c == 0x0a) {
-						Thread.sleep(30);
+						Thread.sleep(200);
 					}
 				} catch (Exception ee) {}
 				synchronized(this) {}
