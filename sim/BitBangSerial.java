@@ -34,7 +34,7 @@ private long lastclk = 0;
 	private long ticks = 0;
 	private int baud = 1200;	// 1666 cycles/bit, ~104 instructions
 	private int nbit = 8;
-	private int nstp = 1;
+	private int nstp = 3;	// need extra for paper tape reader overrun
 	private int bclk;
 	private int mstp;
 	private int mbit;
@@ -89,7 +89,7 @@ private long lastclk = 0;
 			}
 		}
 		bclk = intr.getSpeed() / baud;
-		mstp = (0b11 << (nbit + 1));	// max 2 STOP bits
+		mstp = (0b1111 << (nbit + 1));	// max 2 STOP bits
 		mbit = (1 << (nbit - 1));
 		s = props.getProperty("quart_att");
 		if (s != null && s.length() > 1) {
