@@ -121,7 +121,11 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		if (props.getProperty("quart") != null) {
 			addDevice(new BitBangSerial(props, this));
 		}
-
+		s = props.getProperty("cdp1854");	// TODO: support multiple UARTs?
+		if (s != null) {
+			if (s.length() == 0) s = "tty";
+			addDevice(new CDP1854(props, s, this));
+		}
 		disas = new CDP1802Disassembler(mem);
 	}
 

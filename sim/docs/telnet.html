@@ -1,0 +1,43 @@
+<HTML>
+<HEAD>
+<TITLE>TelnetSerial Operation</TITLE>
+</HEAD>
+<BODY>
+<H3>TelnetSerial Operation</H3>
+
+<P>This serial port attachment is a TCP/IP socket connection,
+compatible with telnet.
+
+<P>The attachment syntax is:
+
+<PRE>TelnetSerial <I>IP-addr</I> <I>port</I></PRE>
+
+<P>Where <I>IP-addr</I> is the IP address or hostname of the system
+running the simulator, and <I>port</I> is the TCP/IP port number
+you want to listen on. This number must be between 3000-65535,
+although some systems may allow numbers larger than 65535.
+
+<P>When connecting with a terminal program (or 'telnet'),
+you must specify the same <I>IP-addr</I> and <I>port</I>.
+For example, the telnet command would be:
+
+<PRE>telnet <I>IP-addr</I> <I>port</I></PRE>
+
+<P>Note that the terminal program must use a "raw" mode,
+or else you can strange behavior due to line buffering and
+possible translation of character such and CR. For telnet,
+the command would be "mode character". Other terminal programs
+would have different methods for changing the mode.
+
+<P>Telnet allows you to setup a "config file" to automatically
+set the mode (or any other telnet commands) automatically.
+By default, this file is "~/.telnetrc". For this example,
+that file would contain:
+
+<PRE>
+<I>IP-addr</I>
+        mode character
+</PRE>
+
+</BODY>
+</HTML>
