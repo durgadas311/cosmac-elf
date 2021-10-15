@@ -144,9 +144,9 @@ Default is "1": Q "on" equates to RS232 MARK.</DD>
 Must match a JAVA class that is built-in to the JAR.
 Classes available:
   <DL>
-  <DT>GlassTtySerial</DT>
+  <DT>TeletypeSerial</DT>
   <DD>A very simple scrolling text window.
-      <A HREF="teletype.html">For operating instructions click here</A>.
+      For operating instructions <A HREF="teletype.html">click here</A>.
   </DD>
   <DT>TelnetSerial ip-addr port</DT>
   <DD>A telnet (TCP/IP socket) connection at IP address and port.
@@ -154,6 +154,7 @@ Classes available:
       to avoid translation of CR and buffering until ENTER is pressed.
       "mode character" is the command for telnet, and can be setup
       in the ~/.telnetrc file.
+      Telnet is not required, but telnet negotiation sequences are ignored.
   </DD>
   </DL>
 </DD>

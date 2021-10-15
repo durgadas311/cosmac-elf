@@ -9,8 +9,15 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-public class GlassTtySerial implements SerialDevice,
+public class TeletypeSerial implements SerialDevice,
 			KeyListener, ActionListener, Runnable {
+	// ASCII character constants
+	static final int cLF = 0x0a;
+	static final int cCR = 0x0d;
+	static final int cDC1 = 0x11;
+	static final int cDC2 = 0x12;
+	static final int cDC3 = 0x13;
+	static final int cDC4 = 0x14;
 	VirtualUART uart;
 	String dbg;
 	InputStream inp;
@@ -33,8 +40,9 @@ public class GlassTtySerial implements SerialDevice,
 	boolean dc2 = false;
 	FileOutputStream punch = null;
 	File last_pun = null;
+	int eol_delay = 0;
 
-	public GlassTtySerial(Properties props, Vector<String> argv, VirtualUART uart) {
+	public TeletypeSerial(Properties props, Vector<String> argv, VirtualUART uart) {
 		this.uart = uart;
 		for (int x = 0; x < argv.size(); ++x) {
 			if (argv.get(x).equalsIgnoreCase("modem")) {
@@ -43,8 +51,28 @@ public class GlassTtySerial implements SerialDevice,
 				nodtr = true;
 			}
 		}
+		String s = props.getProperty("teletype_eol_delay");
+		if (s != null) {
+			eol_delay = Integer.valueOf(s);
+		}
+		s = props.getProperty("teletype_reader");
+		if (s != null) {
+			try {
+				setRdrFile(new File(s));
+			} catch (Exception ee) {
+				System.err.format("teletype_reader: %s\n", ee.toString());
+			}
+		}
+		s = props.getProperty("teletype_punch");
+		if (s != null) {
+			try {
+				setPunFile(new File(s));
+			} catch (Exception ee) {
+				System.err.format("teletype_punch: %s\n", ee.toString());
+			}
+		}
 		last = new File(".");
-		dbg = "GlassTtySerial\n";
+		dbg = "TeletypeSerial\n";
 		uart.attachDevice(this);
 		if (!modem) {
 			uart.setModem(VirtualUART.SET_CTS |
@@ -150,30 +178,30 @@ public class GlassTtySerial implements SerialDevice,
 		if (dc2 && punch != null) {
 			try { punch.write(b); } catch (Exception ee) {}
 		}
-		if (b == 0x11)	{	// DC1 = ^Q = XON (reader ON)
+		if (b == cDC1)	{	// DC1 = ^Q = XON (reader ON)
 			setDC1(true);
 			return;
 		}
-		if (b == 0x12)	{	// DC2 = ^R (punch ON)
+		if (b == cDC2)	{	// DC2 = ^R (punch ON)
 			setDC2(true);
 			return;
 		}
-		if (b == 0x13)	{	// DC3 = ^S = XOFF (reader OFF)
+		if (b == cDC3)	{	// DC3 = ^S = XOFF (reader OFF)
 			setDC1(false);
 			return;
 		}
-		if (b == 0x14)	{	// DC4 = ^T (punch OFF)
+		if (b == cDC4)	{	// DC4 = ^T (punch OFF)
 			setDC2(false);
 			try {
 				punch.flush();
 			} catch (Exception ee) {}
 			return;
 		}
-		if (b >= ' ' || b == 0x0a || b == 0x0d) {
+		if (b >= ' ' || b == cLF || b == cCR) {
 			byte[] bb = { (byte)b };
 			text.insert(new String(bb), eot++);
 			text.setCaretPosition(eot);
-			if (b == 0x0a) ++eol;
+			if (b == cLF) ++eol;
 			int y = eol * 10;	// font height = 10
 			text.scrollRectToVisible(new Rectangle(0, y - 50, 100, 50));
 		}
@@ -208,6 +236,14 @@ public class GlassTtySerial implements SerialDevice,
 	}
 	/////////////////////////////
 
+	private void setRdrFile(File rdr) throws Exception {
+		reader = new FileInputStream(rdr);
+		last = rdr;
+		last_rdr = rdr;
+		DC1.setToolTipText(rdr.getName());
+		setDC1(false);
+	}
+
 	private void rdrFile() {
 		if (reader != null) {
 			try { reader.close(); } catch (Exception ee) {}
@@ -227,15 +263,18 @@ public class GlassTtySerial implements SerialDevice,
 			return;
 		}
 		try {
-			File file = ch.getSelectedFile();
-			reader = new FileInputStream(file);
-			last = file;
-			last_rdr = file;
-			DC1.setToolTipText(file.getName());
-			setDC1(false);
+			setRdrFile(ch.getSelectedFile());
 		} catch (Exception ee) {
 			ELFOperator.warn(frame, "Reader", ee.toString());
 		}
+	}
+
+	private void setPunFile(File pun) throws Exception {
+		punch = new FileOutputStream(pun);
+		last = pun;
+		last_pun = pun;
+		DC2.setToolTipText(pun.getName());
+		setDC2(false);
 	}
 
 	private void punFile() {
@@ -258,12 +297,7 @@ public class GlassTtySerial implements SerialDevice,
 			return;
 		}
 		try {
-			File file = ch.getSelectedFile();
-			punch = new FileOutputStream(file);
-			last = file;
-			last_pun = file;
-			DC2.setToolTipText(file.getName());
-			setDC2(false);
+			setPunFile(ch.getSelectedFile());
 		} catch (Exception ee) {
 			ELFOperator.warn(frame, "Punch", ee.toString());
 		}
@@ -370,9 +404,15 @@ public class GlassTtySerial implements SerialDevice,
 						synchronized(this) {}
 					}
 					if (dc1) uart.put(c, false);
-					// a generous pause after LF
-					if (c == 0x0a) {
-						Thread.sleep(200);
+					if (c == cDC3) {
+						setDC1(false);
+					}
+					// A generous pause after LF.
+					// This is not needed if the data
+					// has sufficient NULs, as does output
+					// of LIST command from Tiny BASIC.
+					if (c == cLF && eol_delay > 0) {
+						Thread.sleep(eol_delay);
 					}
 				} catch (Exception ee) {}
 				synchronized(this) {}

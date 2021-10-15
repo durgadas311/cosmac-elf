@@ -15,10 +15,12 @@ the ASR-33 Teletype.
 	<DL>
 	<DT>Reader</DT>
 	<DD>Selects file to use as the paper tape reader data.
-	Any currrent file is closed.</DD>
+	Any currrent file is closed.
+	Cancel leaves the device EMPTY.</DD>
 	<DT>Punch</DT>
 	<DD>Selects file to use as the paper tape reader data.
-	Any currrent file is closed.</DD>
+	Any currrent file is closed.
+	Cancel leaves the device EMPTY.</DD>
 	</DL>
 </DD>
 <DT>Paper</DT>
@@ -43,6 +45,26 @@ This is essentially the same as the computer sending a ^R (DC2) character.</DD>
 <DT>(TAPE)</DT>
 <DD>Turns off the paper tape punch.
 This is essentially the same as the computer sending a ^T (DC4) character.</DD>
+</DL>
+
+<P>Properties are:
+<DL>
+<DT>teletype_eol_delay</DT>
+<DD>A delay to be added after LF for paper tape.
+This should only be needed if the paper tape file does not contain NULs.
+Units are milliseconds.
+A good working value seems to be 200 (for Tiny BASIC, at least).
+Default is "0" - no delay.
+</DD>
+<DT>teletype_reader</DT>
+<DD>A file to be mounted on the paper tape reader.
+This file may be changed later, using the menus.
+</DD>
+<DT>teletype_punch</DT>
+<DD>A file to be mounted on the paper tape punch.
+This file will be overwritten, so typically the file should not exist when starting.
+This file may be changed later, using the menus.
+</DD>
 </DL>
 
 </BODY>
