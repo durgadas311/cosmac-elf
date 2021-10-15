@@ -16,6 +16,8 @@ Optional hardware add-ons include:
 * PROM (overlays RAM when jumper installed)
 * Hexadecimal Keypad
 * PIXIE Graphic Display
+* RS232 interface connected to Q/EFn pins
+* CDP1854 UART
 
 A plain-text configuration file may be used to add optional hardware and expand RAM.
 
