@@ -8,6 +8,14 @@
 <P>This serial port attachment is a "dumb terminal" modeled after
 the ASR-33 Teletype.
 
+<P>The paper tape reader uses text files on the host.
+Hovering the mouse over the AUTO button will reveal the name of
+the file currently mounted, or "EMPTY" if none.
+
+<P>The paper tape punch also uses text files on the host.
+Hovering the mouse over the TAPE button will reveal the name of
+the file currently mounted, or "EMPTY" if none.
+
 <P>The following menus and buttons are available:
 <DL>
 <DT>Tape</DT>
@@ -16,7 +24,9 @@ the ASR-33 Teletype.
 	<DT>Reader</DT>
 	<DD>Selects file to use as the paper tape reader data.
 	Any currrent file is closed.
-	Cancel leaves the device EMPTY.</DD>
+	Cancel leaves the device EMPTY.
+	Re-selecting the same file again effectively "rewinds" the tape.
+	</DD>
 	<DT>Punch</DT>
 	<DD>Selects file to use as the paper tape reader data.
 	Any currrent file is closed.
@@ -33,12 +43,20 @@ the ASR-33 Teletype.
 	the paper on a teletype.</DD>
 	</DL>
 </DD>
-<DT>XON</DT>
+<DT>START</DT>
 <DD>Starts the paper tape reader, if a file was selected.
-This is essentially the same as the computer sending a ^Q (DC1) character.</DD>
-<DT>XOFF</DT>
-<DD>Stops the paper tape reader.
-This is essentially the same as the computer sending a ^S (DC3) character.</DD>
+This is essentially the same as the computer sending a ^Q (DC1) character
+with the reader in AUTO mode.</DD>
+<DT>AUTO</DT>
+<DD>Sets the paper tape reader in AUTO moe, if a file was selected.
+This allows the reader to respond ^Q (DC1) and ^S (DC3) characters from the
+computer.
+</DD>
+<DT>STOP</DT>
+<DD>Manually stops the paper tape reader.
+This also cancels AUTO mode, preventing the reader from responding
+to control characters from the computer.
+</DD>
 <DT>TAPE</DT>
 <DD>Turns on the paper tape punch, if a file was selected.
 This is essentially the same as the computer sending a ^R (DC2) character.</DD>
@@ -57,11 +75,14 @@ A good working value seems to be 200 (for Tiny BASIC, at least).
 Default is "0" - no delay.
 </DD>
 <DT>teletype_reader</DT>
-<DD>A file to be mounted on the paper tape reader.
+<DD>A file to be initially mounted on the paper tape reader.
 This file may be changed later, using the menus.
+The reader is left in the STOP mode.
 </DD>
+<DT>teletype_auto</DT>
+<DD>Sets the reader in AUTO mode.</DD>
 <DT>teletype_punch</DT>
-<DD>A file to be mounted on the paper tape punch.
+<DD>A file to be initially mounted on the paper tape punch.
 This file will be overwritten, so typically the file should not exist when starting.
 This file may be changed later, using the menus.
 </DD>

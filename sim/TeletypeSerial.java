@@ -27,10 +27,12 @@ public class TeletypeSerial implements SerialDevice,
 	JFrame frame;
 	JTextArea text;
 	JScrollPane scroll;
+	JButton DC1s;
 	JButton DC1;
 	JButton DC2;
 	JButton DC3;
 	JButton DC4;
+	boolean auto;
 	int eot;
 	int eol;
 	File last;
@@ -54,22 +56,6 @@ public class TeletypeSerial implements SerialDevice,
 		String s = props.getProperty("teletype_eol_delay");
 		if (s != null) {
 			eol_delay = Integer.valueOf(s);
-		}
-		s = props.getProperty("teletype_reader");
-		if (s != null) {
-			try {
-				setRdrFile(new File(s));
-			} catch (Exception ee) {
-				System.err.format("teletype_reader: %s\n", ee.toString());
-			}
-		}
-		s = props.getProperty("teletype_punch");
-		if (s != null) {
-			try {
-				setPunFile(new File(s));
-			} catch (Exception ee) {
-				System.err.format("teletype_punch: %s\n", ee.toString());
-			}
 		}
 		last = new File(".");
 		dbg = "TeletypeSerial\n";
@@ -102,15 +88,29 @@ public class TeletypeSerial implements SerialDevice,
 		mu.add(mi);
 		frame.setJMenuBar(mb);
 
+		Font ft = new Font("Sans-serif", Font.PLAIN, 12);
 		JPanel pan = new JPanel();
 		pan.setPreferredSize(new Dimension(10, 10));
 		pan.setOpaque(false);
 		mb.add(pan);
-		DC1 = new JButton("XON");
+		DC1s = new JButton("START");
+		DC1s.setFont(ft);
+		DC1s.setPreferredSize(new Dimension(50, 20));
+		DC1s.setMargin(new Insets(2, 2, 2, 2));
+		DC1s.setMnemonic(KeyEvent.VK_0);
+		DC1s.addActionListener(this);
+		mb.add(DC1s);
+		DC1 = new JButton("AUTO");
+		DC1.setFont(ft);
+		DC1.setPreferredSize(new Dimension(50, 20));
+		DC1.setMargin(new Insets(2, 2, 2, 2));
 		DC1.setMnemonic(KeyEvent.VK_1);
 		DC1.addActionListener(this);
 		mb.add(DC1);
-		DC3 = new JButton("XOFF");
+		DC3 = new JButton("STOP");
+		DC3.setFont(ft);
+		DC3.setPreferredSize(new Dimension(50, 20));
+		DC3.setMargin(new Insets(2, 2, 2, 2));
 		DC3.setMnemonic(KeyEvent.VK_3);
 		DC3.addActionListener(this);
 		mb.add(DC3);
@@ -119,10 +119,16 @@ public class TeletypeSerial implements SerialDevice,
 		pan.setOpaque(false);
 		mb.add(pan);
 		DC2 = new JButton("TAPE");
+		DC2.setFont(ft);
+		DC2.setPreferredSize(new Dimension(50, 20));
+		DC2.setMargin(new Insets(2, 2, 2, 2));
 		DC2.setMnemonic(KeyEvent.VK_2);
 		DC2.addActionListener(this);
 		mb.add(DC2);
 		DC4 = new JButton("(TAPE)");
+		DC4.setFont(ft);
+		DC4.setPreferredSize(new Dimension(50, 20));
+		DC4.setMargin(new Insets(2, 1, 2, 1));
 		DC4.setMnemonic(KeyEvent.VK_4);
 		DC4.addActionListener(this);
 		mb.add(DC4);
@@ -130,10 +136,31 @@ public class TeletypeSerial implements SerialDevice,
 		pan.setPreferredSize(new Dimension(10, 10));
 		pan.setOpaque(false);
 		mb.add(pan);
+		setAUTO(false);
 		setDC1(false);
 		setDC2(false);
 		DC1.setToolTipText("EMPTY");
 		DC2.setToolTipText("EMPTY");
+		s = props.getProperty("teletype_reader");
+		if (s != null) {
+			try {
+				setRdrFile(new File(s));
+			} catch (Exception ee) {
+				System.err.format("teletype_reader: %s\n", ee.toString());
+			}
+		}
+		s = props.getProperty("teletype_auto");
+		if (s != null) {
+			setAUTO(true);
+		}
+		s = props.getProperty("teletype_punch");
+		if (s != null) {
+			try {
+				setPunFile(new File(s));
+			} catch (Exception ee) {
+				System.err.format("teletype_punch: %s\n", ee.toString());
+			}
+		}
 
 		// TODO: cursor
 		text = new JTextArea();
@@ -148,7 +175,7 @@ public class TeletypeSerial implements SerialDevice,
 		scroll = new JScrollPane(text);
 		scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scroll.setPreferredSize(new Dimension(600, 320));
+		scroll.setPreferredSize(new Dimension(500, 320));
 		frame.add(scroll, BorderLayout.CENTER);
 		frame.pack();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -159,10 +186,14 @@ public class TeletypeSerial implements SerialDevice,
 	}
 
 	// Paper Tape Reader
+	private synchronized void setAUTO(boolean on) {
+		auto = on;
+		DC1s.setEnabled(reader != null);
+		DC1.setEnabled(reader != null && !auto);
+		DC3.setEnabled(reader != null && auto);
+	}
 	private synchronized void setDC1(boolean on) {
-		dc1 = (reader != null && on);
-		DC1.setEnabled(reader != null && !dc1);
-		DC3.setEnabled(reader != null && dc1);
+		dc1 = (auto && reader != null && on);
 	}
 
 	// Paper Tape Punch
@@ -241,6 +272,7 @@ public class TeletypeSerial implements SerialDevice,
 		last = rdr;
 		last_rdr = rdr;
 		DC1.setToolTipText(rdr.getName());
+		setAUTO(false);
 		setDC1(false);
 	}
 
@@ -249,6 +281,7 @@ public class TeletypeSerial implements SerialDevice,
 			try { reader.close(); } catch (Exception ee) {}
 			reader = null;
 			DC1.setToolTipText("EMPTY");
+			setAUTO(false);
 			setDC1(false);
 		}
 		SuffFileChooser ch = new SuffFileChooser("Reader",
@@ -367,13 +400,18 @@ public class TeletypeSerial implements SerialDevice,
 			clear();
 			text.repaint();	// needed?
 			break;
-		case KeyEvent.VK_1:
+		case KeyEvent.VK_0:
+			setAUTO(true);
 			setDC1(true);
+			break;
+		case KeyEvent.VK_1:
+			setAUTO(true);
 			break;
 		case KeyEvent.VK_2:
 			setDC2(true);
 			break;
 		case KeyEvent.VK_3:
+			setAUTO(false);
 			setDC1(false);
 			break;
 		case KeyEvent.VK_4:
