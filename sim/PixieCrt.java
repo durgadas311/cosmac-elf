@@ -11,6 +11,7 @@ public class PixieCrt extends JPanel
 		implements IODevice, DMAController, ClockListener {
 	static final int _sw = 320;	// screen width
 	static final int _sh = 240;	// screen height
+	private boolean disable;	// allow CDP1861 disable via OUT
 	private boolean enabled;
 	private byte[] crt = new byte[1024];	// 8x128 bytes = 64x128 pixels
 	private int bd_width;
@@ -72,6 +73,8 @@ public class PixieCrt extends JPanel
 		if (s != null) {
 			phosphor = new Color(Integer.valueOf(s, 16));
 		}
+		// Allow CDP1861 disable via OUT?
+		disable = (props.getProperty("pixie_disable") != null);
 		bd_width = 3;
 		bg = new Color(50,50,50, 255);
 		frame = new JFrame("PIXIE Graphics Display");
@@ -139,9 +142,16 @@ public class PixieCrt extends JPanel
 
 	public void out(int port, int value) {
 		// data ignored
-		enabled = true;
-		state = State.BLANKING;
-		time = 64;	// a little delay
+		if (disable) {
+			enabled = false;
+			state = State.BLANKING;
+			time = 64;	// a little delay
+			repaint();
+		} else {
+			enabled = true;
+			state = State.BLANKING;
+			time = 64;	// a little delay
+		}
 	}
 
 	public String getDeviceName() { return "PIXIE"; }
