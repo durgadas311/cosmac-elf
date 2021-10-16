@@ -4,7 +4,7 @@
 AS = a18
 
 ASMS = $(wildcard *.asm)
-BINS = tb0_test.bin
+BINS = tb0_test.bin tb0.bin
 
 all: $(BINS)
 
