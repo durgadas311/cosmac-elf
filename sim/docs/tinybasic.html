@@ -21,8 +21,16 @@ preload = tb0_test.bin
 autorun
 </PRE>
 
-<P>You will need to press CR (carriage return - i.e. ENTER on modern keyboards)
+<P>The version "tb0_test.bin" is hard-coded to 1200 baud and will run
+an embedded test program when started. If loaded into RAM ("preload" property)
+then it is possible to type "NEW" and enter other programs.
+
+<P>If you compile tb0_test.asm with "AUTORUN EQU 0", then the test
+program is not included and you will need to press CR
+(carriage return - i.e. ENTER on modern keyboards)
 in order to let Tiny BASIC calculate the serial baud rate and start.
+It will then prompt "NEW?" at which point you should enter "Y" (CR).
+A few seconds later you will get the ":" prompt.
 
 <P>See the documentation at these URLs for information on how to run Tiny BASIC.
 <UL>
