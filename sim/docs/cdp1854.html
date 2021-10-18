@@ -1,0 +1,53 @@
+<HTML>
+<HEAD>
+<TITLE>CDP1854 UART Configuration</TITLE>
+</HEAD>
+<BODY>
+<H3>CDP1854 UART Configuration</H3>
+
+<P>This device emulates the CDP1854 UART chip.
+The property "cdp1854=<I>dev</I>" is used to enable the device.
+The value of this property is used as the device mnemonic,
+and defaults to "tty".
+
+<P>Note that this device requires iodecoder=strict and consumes
+two adjacent ports based on N0. The Tx/Rx data ports are at N0=0
+and the status/control ports are at N0=1.
+
+<P>The following additional properties configure the UART,
+using the device mnemonic string chosen above.
+
+<DT><I>dev</I>_port</DT>
+<DD>Define the I/O device number base,
+the values of N0,N1,N2 that will select this device.
+See notes above.
+Default is none: device is inaccessible.</DD>
+
+<DT><I>dev</I>_clock</DT>
+<DD>Define the serial clock rate.
+Note that this clock rate is 16x the baud.
+Default is 153600, which is 9600 baud.
+This value is used to simulate timing to the CDP1802
+program, and does not affect the interaction with attached
+peripheral devices.
+
+<DT><I>dev</I>_att</DT>
+<DD>Define what is attached to the UART.
+Must match a JAVA class that is built-in to the JAR.
+Classes available:
+  <DL>
+  <DT>TeletypeSerial</DT>
+  <DD>A very simple scrolling text window.
+      For operating instructions <A HREF="teletype.html">click here</A>.
+  </DD>
+  <DT>TelnetSerial ip-addr port</DT>
+  <DD>A telnet (TCP/IP socket) connection at IP address and port.
+      For operating instructions <A HREF="telnet.html">click here</A>.
+  </DD>
+  </DL>
+</DD>
+
+</DL>
+
+</BODY>
+</HTML>

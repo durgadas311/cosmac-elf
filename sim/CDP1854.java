@@ -37,7 +37,8 @@ public class CDP1854 implements IODevice, VirtualUART {
 	private static final int MCR_WLSB = 0x1c;	// word len, stop bit
 	private static final int MCR_IE = 0x20;
 	private static final int MCR_BRK = 0x40;
-	private static final int MCR_TR = 0x80;
+	private static final int MCR_TR = 0x80;		// set RTS, enable THRE intr
+							// (if MCR_IE is set)
 
 	private Object attObj;
 	private SerialDevice io;
@@ -48,7 +49,7 @@ public class CDP1854 implements IODevice, VirtualUART {
 	private long lastRx = 0;
 	private int clock = 153600;	// Hz, both TxC and RxC (9600)
 	private long nanoBaud = 0; // length of char in nanoseconds
-	private int bits; // bits per character
+	private int bits = 8; // bits per character
 
 	public CDP1854(Properties props, String pfx,
 			Interruptor intr) {
@@ -65,10 +66,13 @@ public class CDP1854 implements IODevice, VirtualUART {
 				ioa = i;
 			}
 		}
-		if (intr.IODecoder() == Interruptor.SIMPLE) {
-			iom = ioa; // not always simple... e.g. ioa=7
-		} else {
-			iom = 0b111;
+		if (ioa != 0) {
+			if (intr.IODecoder() == Interruptor.SIMPLE) {
+				// TODO: incompatible?
+				iom = ioa | 1; // not always simple... e.g. ioa=7
+			} else {
+				iom = 0b110;	// two ports...
+			}
 		}
 		// TODO: allow separate Rx and Tx clocks?
 		// TODO: select popular default...
@@ -90,6 +94,7 @@ public class CDP1854 implements IODevice, VirtualUART {
 		if (s != null && s.length() > 1) {
 			attachClass(props, s);
 		}
+		System.err.format("CDP1854 at port %d mask %d\n", ioa, iom);
 	}
 
 	private void attachClass(Properties props, String s) {
@@ -107,6 +112,7 @@ public class CDP1854 implements IODevice, VirtualUART {
 					props,
 					argv,
 					(VirtualUART)this);
+			System.err.format("CDP1854 attached %s\n", s);
 		} catch (Exception ee) {
 			System.err.format("Invalid class in attachment: %s\n", s);
 			return;
@@ -282,7 +288,8 @@ public class CDP1854 implements IODevice, VirtualUART {
 	}
 
 	private boolean canTx() {
-		return ((MSR & MSR_CTS) != 0 && (MCR & MCR_TR) != 0);
+		// NOTE: !MCR_TR does not inhibit Tx...
+		return ((MSR & MSR_CTS) != 0);
 	}
 
 	////////////////////////////////////////////////////
@@ -365,9 +372,9 @@ public class CDP1854 implements IODevice, VirtualUART {
 
 	public String dumpDebug() {
 		String ret = new String();
-		ret += String.format("port %02x, #fifo = %d, #fifi = %d\n",
-			ioa, fifo.size(), fifi.size());
-		ret += String.format("clock = %d nanBaud = %d\n", clock, nanoBaud);
+		ret += String.format("port %d mask %d, #fifo = %d, #fifi = %d\n",
+			ioa, iom, fifo.size(), fifi.size());
+		ret += String.format("clock = %d nanoBaud = %d\n", clock, nanoBaud);
 		ret += String.format("MCR = %02x, MSR = %02x\n", MCR, MSR);
 		if (io != null) {
 			ret += io.dumpDebug();

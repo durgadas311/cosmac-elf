@@ -1,0 +1,49 @@
+<HTML>
+<HEAD>
+<TITLE>PIXIE Graphics Display Configuration</TITLE>
+</HEAD>
+<BODY>
+<H3>PIXIE Graphics Display Configuration</H3>
+
+<P>The property "pixie" (value ignored)
+adds the PIXIE graphic display to the simulation.
+This emulates the CDP1861 video graphics chip.
+
+<P>Note that this emulation counts CPU cycles in order to
+produce the timing, and that CPU cycles are only reported
+at the end of instructions. This means that the timing
+will not be identical to the original chip, but should
+meet software timing expectations.
+
+<P>Also note that this device does not (currently)
+force the CPU clock to a slower rate (e.g. 1.789MHz).
+However, the timing is generated based on CPU cycles and not absolute
+time references so the CPU clock setting is aribtrary
+in that respect.
+This device is not (currently) capable of operating at an independent clock rate.
+
+<P>The following properties are recognized:
+<DL>
+<DT>pixie_color</DT>
+<DD>Specify the screen color for the PIXIE graphic display.
+Value is a 6-digit hexadecimal number representing RGB.
+Default is green (00ff00).</DD>
+
+<DT>pixie_port</DT>
+<DD>Set the I/O port ('n' for "OUT n"/"IN n" instructions).
+Default is 1 (using N0 signal).</DD>
+
+<DT>pixie_disable</DT>
+<DD>(value ignored) Allows for the CDP1861 to be disabled
+using the OUT instruction at the selected port.
+Only INP will enable the chip, if this option is selected.
+</DD>
+
+<DT>pixie_ef</DT>
+<DD>Set the EF input for detecting frame refresh start/end.
+Default is 1 (using EF1 signal).</DD>
+
+</DL>
+
+</BODY>
+</HTML>

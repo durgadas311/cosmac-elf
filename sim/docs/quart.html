@@ -1,0 +1,67 @@
+<HTML>
+<HEAD>
+<TITLE>Q-UART Configuration</TITLE>
+</HEAD>
+<BODY>
+<H3>Q-UART Configuration</H3>
+
+<P>The property "quart" (value ignored) will add the
+Q-UART serial interface to the simulation.
+This allows for using the Q output for RS232 Tx and one of the EF inputs
+for RS232 Rx. Either one, or both (of Q and EFn), may be inverted with respect to the
+RS232 MARK and SPACE line levels.
+
+<P>The following properties are recognized:
+
+<DL>
+
+<DT>quart_ef</DT>
+<DD>Set the EF input for receiving serial data.
+Default is 3 (using EF3 signal).</DD>
+
+<DT>quart_baud</DT>
+<DD>Set the serial data data rate.
+Default is 1200 baud.
+Beware of using non-standard values or values greater than 1200.
+This value is converted to the number of CPU clock cycles required for
+one data bit.
+Note that CPU instructions are neraly always 16 clock cycles,
+and that Q and EFn can only be operated on instruction
+boundaries and typically require multiple instructions
+to process.
+1200 baud is close the maximum workable bit rate for a 2MHz CPU.</DD>
+
+<DT>quart_nbit</DT>
+<DD>Number of data bits. Values between 5 and 8 are accepted.
+Default is "8".
+Parity is not currently supported.
+STOP bits are not critical on receive, 3 are always sent.</DD>
+
+<DT>quart_qmark</DT>
+<DD>"0" or "1" to select which level on Q indicates RS232 "MARK".
+Default is "1": Q "on" equates to RS232 MARK.</DD>
+
+<DT>quart_efmark</DT>
+<DD>"0" or "1" to select which level on EF indicates RS232 "MARK".
+Default is "1": Q "on" equates to RS232 MARK.</DD>
+
+<DT>quart_att</DT>
+<DD>Define what is attached to the Q-UART serial port.
+Must match a JAVA class that is built-in to the JAR.
+Classes available:
+  <DL>
+  <DT>TeletypeSerial</DT>
+  <DD>A very simple scrolling text window.
+      For operating instructions <A HREF="teletype.html">click here</A>.
+  </DD>
+  <DT>TelnetSerial ip-addr port</DT>
+  <DD>A telnet (TCP/IP socket) connection at IP address and port.
+      For operating instructions <A HREF="telnet.html">click here</A>.
+  </DD>
+  </DL>
+</DD>
+
+</DL>
+
+</BODY>
+</HTML>

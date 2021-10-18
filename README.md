@@ -15,9 +15,9 @@ Optional hardware add-ons include:
 
 * PROM (overlays RAM when jumper installed)
 * Hexadecimal Keypad
-* PIXIE Graphic Display
-* RS232 interface connected to Q/EFn pins
-* CDP1854 UART
+* [PIXIE Graphic Display](https://htmlpreview.github.io/?https://github.com/durgadas311/cosmac-elf/blob/master/sim/docs/cdp1861.html)
+* [RS232 interface connected to Q/EFn pins](https://htmlpreview.github.io/?https://github.com/durgadas311/cosmac-elf/blob/master/sim/docs/quart.html)
+* [CDP1854 UART](https://htmlpreview.github.io/?https://github.com/durgadas311/cosmac-elf/blob/master/sim/docs/cdp1854.html)
 
 A plain-text configuration file may be used to add optional hardware and expand RAM.
 
