@@ -33,6 +33,7 @@ public class TeletypeSerial implements SerialDevice,
 	JButton DC3;
 	JButton DC4;
 	boolean auto;
+	boolean lc = false;	// allow lower-case
 	int eot;
 	int eol;
 	File last;
@@ -57,6 +58,7 @@ public class TeletypeSerial implements SerialDevice,
 		if (s != null) {
 			eol_delay = Integer.valueOf(s);
 		}
+		lc = (props.getProperty("teletype_lc") != null);
 		last = new File(".");
 		dbg = "TeletypeSerial\n";
 		uart.attachDevice(this);
@@ -368,6 +370,9 @@ public class TeletypeSerial implements SerialDevice,
 			c = '\r';
 		}
 		if (c >= 0 && c <= 0x7f) {
+			if (!lc && c >= 'a' && c <= 'z') {
+				c &= 0x5f;
+			}
 			uart.put(c, false);
 		}
 	}

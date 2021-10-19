@@ -6,7 +6,7 @@
 <H3>Glass Teletype Operation</H3>
 
 <P>This serial port attachment is a "dumb terminal" modeled after
-the ASR-33 Teletype.
+the ASR-33 Teletype. By default, it forces all input into upper-case.
 
 <P>The paper tape reader uses text files on the host.
 Hovering the mouse over the AUTO button will reveal the name of
@@ -67,6 +67,10 @@ This is essentially the same as the computer sending a ^T (DC4) character.</DD>
 
 <P>Properties are:
 <DL>
+<DT>teletype_lc</DT>
+<DD>(value ignored) Allow lower-case letters to be typed.
+Default is to force all upper-case letters on input.</DD>
+
 <DT>teletype_eol_delay</DT>
 <DD>A delay to be added after LF for paper tape.
 This should only be needed if the paper tape file does not contain NULs.
