@@ -49,6 +49,7 @@ public class ELFFrontPanel extends JPanel
 	GridBagLayout gb;
 	GridBagConstraints gc;
 	LED qLed;
+	boolean aux_disp;
 
 	public ELFFrontPanel(Properties props, Interruptor intr) {
 		super();
@@ -79,13 +80,22 @@ public class ELFFrontPanel extends JPanel
 				efn = n - 1;
 			}
 		}
-		s = props.getProperty("autorun");
-		boolean auto = (s != null);
+		aux_disp = (props.getProperty("elffrontpanel_aux") != null);
+		if (aux_disp) {
+			// TODO: allow configuration?
+			ioa = 4;
+			iom = 4;
+		}
+		boolean auto = (props.getProperty("autorun") != null);
 
 		tiny = new Font("Sans-serif", Font.PLAIN, 8);
 		lesstiny = new Font("Sans-serif", Font.PLAIN, 10);
 		btns = new JCheckBox[12];
-		disp = new JLabel[2];
+		if (aux_disp) {
+			disp = new JLabel[4];
+		} else {
+			disp = new JLabel[2];
+		}
 		Border lb = BorderFactory.createBevelBorder(BevelBorder.RAISED);
 		Color bg = new Color(50, 50, 50);
 		Icon sw_w_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_on.png"));
@@ -336,6 +346,12 @@ public class ELFFrontPanel extends JPanel
 		pan.add(disp[0]);
 		disp[1] = getDisplay();
 		pan.add(disp[1]);
+		if (aux_disp) {
+			disp[2] = getDisplay();
+			pan.add(disp[2]);
+			disp[3] = getDisplay();
+			pan.add(disp[3]);
+		}
 		return pan;
 	}
 
@@ -373,6 +389,16 @@ public class ELFFrontPanel extends JPanel
 		disp[1].repaint();
 	}
 
+	public void setAuxDisplay(int v) {
+		char[] c = new char[1];
+		c[0] = (char)(((v >> 4) & 0x0f) + '@');
+		disp[2].setText(new String(c));
+		c[0] = (char)((v & 0x0f) + '@');
+		disp[3].setText(new String(c));
+		disp[2].repaint();
+		disp[3].repaint();
+	}
+
 	private int getData() {
 		int v = 0;
 		for (int x = 7; x >= 0; --x) {
@@ -406,10 +432,18 @@ public class ELFFrontPanel extends JPanel
 		return getData();
 	}
 	public void out(int port, int value) {
-		setDisplay(value);
+		if (!aux_disp || port == 4) {
+			setDisplay(value);
+		} else if (aux_disp && port == 7) {
+			setAuxDisplay(value);
+		}
 	}
 	public String getDeviceName() { return "ELF-FP"; }
-	public String dumpDebug() { return "no debug data, yet"; }
+	public String dumpDebug() {
+		String ret = String.format("port %d mask %d aux=%s\n",
+				ioa, iom, aux_disp);
+		return ret;
+	}
 
 	// MouseListener
 	public void mouseClicked(MouseEvent e) {}

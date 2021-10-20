@@ -10,6 +10,14 @@ import javax.swing.border.*;
 import javax.swing.Timer;
 import javax.sound.sampled.*;
 
+// Two styles are supported:
+// Default:	as described in PE article
+//	Active-scanning using 4-to-16 latch/decoder,
+//	Scan one with OUT n, sense key-press on EFn, next...
+// "Alt":
+//	Direct-read using 74C922 (or 2x8-to-3 priority encoders),
+//	Sense key-press on EFn, direct read code with INP n.
+
 public class HexKeyPad extends JFrame
 		implements IODevice, MouseListener {
 
@@ -20,14 +28,31 @@ public class HexKeyPad extends JFrame
 	private int index = 0;
 	private int src;
 	private int key = -1;
-	private int ioa = 0b010;
-	private int iom = 0b010;
-	private int efn = 1;
+	private int ioa;
+	private int iom;
+	private int iot;
+	private int efn;
+	private String name;
+	private boolean alt;
 
 	public HexKeyPad(Properties props, Interruptor intr) {
 		super("ELF Hex Keypad");
 		this.intr = intr;
 		src = intr.registerINT();
+		alt = (props.getProperty("hexkeypad_alt") != null);
+		if (alt) {
+			name = "altKEYPAD";
+			iot = IODevice.IN;
+			efn = 2;	// EF3
+			ioa = 0b100;	// INP 4
+			iom = 0b100;
+		} else {
+			name = "HEXKEYPAD";
+			iot = IODevice.OUT;
+			efn = 1;	// EF2
+			ioa = 0b010;	// OUT 2
+			iom = 0b010;
+		}
 		String s = props.getProperty("hexkeypad_port");
 		if (s != null) {
 			int n = Integer.valueOf(s);
@@ -52,6 +77,7 @@ public class HexKeyPad extends JFrame
 				efn = n - 1;
 			}
 		}
+		intr.setEF(src, efn, alt);	// "alt" is active low EFn
 
 		btns = new JButton[16];
 		Color bg = new Color(0,0,0);
@@ -155,7 +181,8 @@ public class HexKeyPad extends JFrame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLocationByPlatform(true);
 		setVisible(true);
-		System.err.format("HexKeyPad at port %d mask %d EF%d\n",
+		System.err.format("HexKeyPad%s at port %d mask %d EF%d\n",
+			alt ? "(alt)" : "",
 			ioa, iom, efn + 1);
 	}
 
@@ -163,20 +190,28 @@ public class HexKeyPad extends JFrame
 	public void reset() {}
 	public int getBaseAddress() { return ioa; }
 	public int getMask() { return iom; }
-	public int getDevType() { return IODevice.OUT; }
-	public int in(int port) { return 0; }	// never called
+	public int getDevType() { return iot; }
+	// Only called for "alt" keypad
+	public int in(int port) {
+		return key & 0xff;
+	}
+	// Only called for default keypad
 	public void out(int port, int value) {
 		index = value & 0x0f;
 		//System.err.format("index = %d\n", index);
 		if (key == index) {
 			//System.err.format("EF2* %d\n", index);
-			intr.setEF(src, efn, true);	// EF2
+			intr.setEF(src, efn, true);
 		} else {
-			intr.setEF(src, efn, false);	// EF2
+			intr.setEF(src, efn, false);
 		}
 	}
-	public String getDeviceName() { return "HEXKEYPAD"; }
-	public String dumpDebug() { return "no debug data, yet"; }
+	public String getDeviceName() { return name; }
+	public String dumpDebug() {
+		String ret = name;
+		ret += String.format(" Port %d mask %d\n", ioa, iom);
+		return ret;
+	}
 
 	// MouseListener
 	public void mouseClicked(MouseEvent e) {}
@@ -188,9 +223,8 @@ public class HexKeyPad extends JFrame
 		mn &= 0xff;
 		//System.err.format("KEY %d\n", mn);
 		key = mn;
-		if (mn == index) {
-			//System.err.format("EF2 %d\n", mn);
-			intr.setEF(src, efn, true);	// EF2
+		if (alt || mn == index) {
+			intr.setEF(src, efn, !alt);
 		}
 	}
 	public void mouseReleased(MouseEvent e) {
@@ -198,6 +232,6 @@ public class HexKeyPad extends JFrame
 		int mn = btn.getMnemonic();
 		mn &= 0xff;
 		key = -1;
-		intr.setEF(src, efn, false);	// EF2
+		intr.setEF(src, efn, alt);
 	}
 }
