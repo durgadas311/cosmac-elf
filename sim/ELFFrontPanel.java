@@ -44,12 +44,15 @@ public class ELFFrontPanel extends JPanel
 	private int efn = 3;
 
 	JCheckBox[] btns;
+	HexKeyPad kpd;
 	JButton in;
 	JLabel[] disp;
 	GridBagLayout gb;
 	GridBagConstraints gc;
 	LED qLed;
 	boolean aux_disp;
+	boolean elf2;
+	int width = 400;
 
 	public ELFFrontPanel(Properties props, Interruptor intr) {
 		super();
@@ -57,7 +60,9 @@ public class ELFFrontPanel extends JPanel
 		src = intr.registerINT();
 		intr.addDMAController(this);
 		intr.addQListener(this);
-		String s = props.getProperty("elffrontpanel_port");
+		String s = props.getProperty("model");
+		elf2 = (s != null && s.equalsIgnoreCase("elf2"));
+		s = props.getProperty("elffrontpanel_port");
 		if (s != null) {
 			int n = Integer.valueOf(s);
 			if (n < 1 || n > 7) {
@@ -87,6 +92,11 @@ public class ELFFrontPanel extends JPanel
 			iom = 4;
 		}
 		boolean auto = (props.getProperty("autorun") != null);
+		if (elf2) {
+			width = 460;
+		} else {
+			width = 420;
+		}
 
 		tiny = new Font("Sans-serif", Font.PLAIN, 8);
 		lesstiny = new Font("Sans-serif", Font.PLAIN, 10);
@@ -139,6 +149,7 @@ public class ELFFrontPanel extends JPanel
 		in.setMnemonic(0x100c);
 		// 0-7 are data bits, ...
 		for (int x = 0; x < 11; ++x) {
+			if (elf2 && x < LOAD) continue;
 			btns[x] = new JCheckBox();
 			btns[x].setPreferredSize(new Dimension(50, 30));
 			btns[x].setHorizontalAlignment(SwingConstants.CENTER);
@@ -167,11 +178,15 @@ public class ELFFrontPanel extends JPanel
 		gc.anchor = GridBagConstraints.CENTER;
 
 		JPanel pan;
-		pan = new JPanel();
-		pan.setPreferredSize(new Dimension(10, 10));
-		pan.setOpaque(false);
-		gb.setConstraints(pan, gc);
-		add(pan);
+		if (false) {
+			gc.gridy = 0;
+			gc.gridx = 0;
+			pan = new JPanel();
+			pan.setPreferredSize(new Dimension(10, 10));
+			pan.setOpaque(false);
+			gb.setConstraints(pan, gc);
+			add(pan);
+		}
 		gc.gridy = 4;
 		gc.gridx = 0;
 		pan = new JPanel();
@@ -179,13 +194,15 @@ public class ELFFrontPanel extends JPanel
 		pan.setOpaque(false);
 		gb.setConstraints(pan, gc);
 		add(pan);
-		gc.gridy = 6;
-		gc.gridx = 0;
-		pan = new JPanel();
-		pan.setPreferredSize(new Dimension(10, 10));
-		pan.setOpaque(false);
-		gb.setConstraints(pan, gc);
-		add(pan);
+		if (!elf2) {
+			gc.gridy = 6;
+			gc.gridx = 0;
+			pan = new JPanel();
+			pan.setPreferredSize(new Dimension(10, 10));
+			pan.setOpaque(false);
+			gb.setConstraints(pan, gc);
+			add(pan);
+		}
 		gc.gridy = 8;
 		gc.gridx = 9;
 		pan = new JPanel();
@@ -225,17 +242,19 @@ public class ELFFrontPanel extends JPanel
 		btns[RUN].addMouseListener(this);
 		gb.setConstraints(btns[RUN], gc);
 		add(btns[RUN]);
-		// DATA buttons
-		gc.gridy = 7;
-		gc.gridx = 1;
-		for (int x = 7; x >= 0; --x) {
-			if ((x & 3) == 0) {
-				btns[x].setSelectedIcon(sw_r_on);
-				btns[x].setIcon(sw_r_off);
+		if (!elf2) {
+			// DATA buttons
+			gc.gridy = 7;
+			gc.gridx = 1;
+			for (int x = 7; x >= 0; --x) {
+				if ((x & 3) == 0) {
+					btns[x].setSelectedIcon(sw_r_on);
+					btns[x].setIcon(sw_r_off);
+				}
+				gb.setConstraints(btns[x], gc);
+				add(btns[x]);
+				++gc.gridx;
 			}
-			gb.setConstraints(btns[x], gc);
-			add(btns[x]);
-			++gc.gridx;
 		}
 		// Button Labels
 		JLabel lab = getLabel("IN");
@@ -259,27 +278,38 @@ public class ELFFrontPanel extends JPanel
 		gb.setConstraints(lab, gc);
 		add(lab);
 
-		// Data buttons labels
-		gc.gridy = 6;
-		gc.gridx = 1;
-		for (int x = 7; x >= 0; --x) {
-			lab = getLabel(String.format("%d", x));
-			gb.setConstraints(lab, gc);
-			add(lab);
-			++gc.gridx;
+		if (elf2) {
+			props.setProperty("hexkeypad_elf2", "yes");
+			kpd = new HexKeyPad(props, intr);
+			pan = kpd.getKeyPad();
+			gc.gridy = 6;
+			gc.gridx = 3;
+			gc.gridwidth = 4;
+			gb.setConstraints(pan, gc);
+			add(pan);
+		} else {
+			// Data buttons labels
+			gc.gridy = 6;
+			gc.gridx = 1;
+			for (int x = 7; x >= 0; --x) {
+				lab = getLabel(String.format("%d", x));
+				gb.setConstraints(lab, gc);
+				add(lab);
+				++gc.gridx;
+			}
 		}
 		// Q LED
 		pan = getQLED();
 		gc.gridy = 1;
-		gc.gridx = 1;
-		gc.gridwidth = 8;
+		gc.gridx = 0;
+		gc.gridwidth = 10;
 		gb.setConstraints(pan, gc);
 		add(pan);
 
 		pan = getHexDisplay();
 		gc.gridy = 2;
-		gc.gridx = 1;
-		gc.gridwidth = 8;
+		gc.gridx = 0;
+		gc.gridwidth = 10;
 		gb.setConstraints(pan, gc);
 		add(pan);
 
@@ -287,8 +317,8 @@ public class ELFFrontPanel extends JPanel
 		if (props.getProperty("prom") != null) {
 			pan = getROMJumper();
 			gc.gridy = 3;
-			gc.gridx = 1;
-			gc.gridwidth = 8;
+			gc.gridx = 0;
+			gc.gridwidth = 10;
 			gb.setConstraints(pan, gc);
 			add(pan);
 			if (auto) {
@@ -322,7 +352,7 @@ public class ELFFrontPanel extends JPanel
 		JPanel pan = new JPanel();
 		pan.setBackground(phenolic);
 		pan.setOpaque(true);
-		pan.setPreferredSize(new Dimension(400, 20));
+		pan.setPreferredSize(new Dimension(width, 20));
 		pan.add(btns[PROM]);
 		pan.add(new JLabel("PROM"));
 		return pan;
@@ -332,7 +362,7 @@ public class ELFFrontPanel extends JPanel
 		JPanel pan = new JPanel();
 		pan.setBackground(phenolic);
 		pan.setOpaque(true);
-		pan.setPreferredSize(new Dimension(400, 20));
+		pan.setPreferredSize(new Dimension(width, 20));
 		pan.add(qLed);
 		return pan;
 	}
@@ -341,7 +371,7 @@ public class ELFFrontPanel extends JPanel
 		JPanel pan = new JPanel();
 		pan.setBackground(phenolic);
 		pan.setOpaque(true);
-		pan.setPreferredSize(new Dimension(400, 70));
+		pan.setPreferredSize(new Dimension(width, 70));
 		disp[0] = getDisplay();
 		pan.add(disp[0]);
 		disp[1] = getDisplay();
@@ -401,9 +431,13 @@ public class ELFFrontPanel extends JPanel
 
 	private int getData() {
 		int v = 0;
-		for (int x = 7; x >= 0; --x) {
-			v <<= 1;
-			if (btns[x].isSelected()) v |= 1;
+		if (elf2) {
+			v = kpd.in(kpd.getBaseAddress());
+		} else {
+			for (int x = 7; x >= 0; --x) {
+				v <<= 1;
+				if (btns[x].isSelected()) v |= 1;
+			}
 		}
 		return v;
 	}

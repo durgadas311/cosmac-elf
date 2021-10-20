@@ -17,14 +17,20 @@ import javax.sound.sampled.*;
 // "Alt":
 //	Direct-read using 74C922 (or 2x8-to-3 priority encoders),
 //	Sense key-press on EFn, direct read code with INP n.
+// "ElfII":
+//	Direct-read using 74C923 and latch for last two keys pressed,
+//	direct read code with INP n.
+//
+// Also a "detached" version for embedding in some other JFrame...
 
 public class HexKeyPad extends JFrame
 		implements IODevice, MouseListener {
 
+	private JPanel kpd;
 	private JButton[] btns;
-	GridBagLayout gb;
-	GridBagConstraints gc;
-	Interruptor intr;
+	private GridBagLayout gb;
+	private GridBagConstraints gc;
+	private Interruptor intr;
 	private int index = 0;
 	private int src;
 	private int key = -1;
@@ -34,13 +40,23 @@ public class HexKeyPad extends JFrame
 	private int efn;
 	private String name;
 	private boolean alt;
+	private boolean elf2;
+
+	public JPanel getKeyPad() { return kpd; }
 
 	public HexKeyPad(Properties props, Interruptor intr) {
 		super("ELF Hex Keypad");
 		this.intr = intr;
 		src = intr.registerINT();
 		alt = (props.getProperty("hexkeypad_alt") != null);
-		if (alt) {
+		elf2 = (props.getProperty("hexkeypad_elf2") != null);
+		if (elf2) {
+			name = "ElfII_KPD";
+			iot = IODevice.IN;
+			efn = 2;	// EF3 - not used
+			ioa = 0b100;	// INP 4
+			iom = 0b100;
+		} else if (alt) {
 			name = "altKEYPAD";
 			iot = IODevice.IN;
 			efn = 2;	// EF3
@@ -77,7 +93,9 @@ public class HexKeyPad extends JFrame
 				efn = n - 1;
 			}
 		}
-		intr.setEF(src, efn, alt);	// "alt" is active low EFn
+		if (alt) {
+			intr.setEF(src, efn, alt);	// "alt" is active low EFn
+		}
 
 		btns = new JButton[16];
 		Color bg = new Color(0,0,0);
@@ -97,8 +115,10 @@ public class HexKeyPad extends JFrame
 			btns[x].setText(String.format("%X", x));
 		}
 		getContentPane().setBackground(bg);
+		kpd = new JPanel();
+		kpd.setBackground(bg);
 		gb = new GridBagLayout();
-		setLayout(gb);
+		kpd.setLayout(gb);
 		gc = new GridBagConstraints();
 		gc.fill = GridBagConstraints.NONE;
 		gc.gridx = 0;
@@ -113,61 +133,61 @@ public class HexKeyPad extends JFrame
 		pan.setPreferredSize(new Dimension(20, 20));
 		pan.setOpaque(false);
 		gb.setConstraints(pan, gc);
-		add(pan);
+		kpd.add(pan);
 		++gc.gridx;
 		++gc.gridy;
 
 		int ret = gc.gridx;
 		gb.setConstraints(btns[12], gc);
-		add(btns[12]);
+		kpd.add(btns[12]);
 		++gc.gridx;
 		gb.setConstraints(btns[13], gc);
-		add(btns[13]);
+		kpd.add(btns[13]);
 		++gc.gridx;
 		gb.setConstraints(btns[14], gc);
-		add(btns[14]);
+		kpd.add(btns[14]);
 		++gc.gridx;
 		gb.setConstraints(btns[15], gc);
-		add(btns[15]);
+		kpd.add(btns[15]);
 		gc.gridx = ret;
 		++gc.gridy;
 		gb.setConstraints(btns[8], gc);
-		add(btns[8]);
+		kpd.add(btns[8]);
 		++gc.gridx;
 		gb.setConstraints(btns[9], gc);
-		add(btns[9]);
+		kpd.add(btns[9]);
 		++gc.gridx;
 		gb.setConstraints(btns[10], gc);
-		add(btns[10]);
+		kpd.add(btns[10]);
 		++gc.gridx;
 		gb.setConstraints(btns[11], gc);
-		add(btns[11]);
+		kpd.add(btns[11]);
 		gc.gridx = ret;
 		++gc.gridy;
 		gb.setConstraints(btns[4], gc);
-		add(btns[4]);
+		kpd.add(btns[4]);
 		++gc.gridx;
 		gb.setConstraints(btns[5], gc);
-		add(btns[5]);
+		kpd.add(btns[5]);
 		++gc.gridx;
 		gb.setConstraints(btns[6], gc);
-		add(btns[6]);
+		kpd.add(btns[6]);
 		++gc.gridx;
 		gb.setConstraints(btns[7], gc);
-		add(btns[7]);
+		kpd.add(btns[7]);
 		gc.gridx = ret;
 		++gc.gridy;
 		gb.setConstraints(btns[0], gc);
-		add(btns[0]);
+		kpd.add(btns[0]);
 		++gc.gridx;
 		gb.setConstraints(btns[1], gc);
-		add(btns[1]);
+		kpd.add(btns[1]);
 		++gc.gridx;
 		gb.setConstraints(btns[2], gc);
-		add(btns[2]);
+		kpd.add(btns[2]);
 		++gc.gridx;
 		gb.setConstraints(btns[3], gc);
-		add(btns[3]);
+		kpd.add(btns[3]);
 		++gc.gridx;
 		++gc.gridy;
 
@@ -175,14 +195,17 @@ public class HexKeyPad extends JFrame
 		pan.setPreferredSize(new Dimension(20, 20));
 		pan.setOpaque(false);
 		gb.setConstraints(pan, gc);
-		add(pan);
+		kpd.add(pan);
 
-		pack();
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setLocationByPlatform(true);
-		setVisible(true);
+		if (!elf2) {
+			add(kpd);
+			pack();
+			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			setLocationByPlatform(true);
+			setVisible(true);
+		}
 		System.err.format("HexKeyPad%s at port %d mask %d EF%d\n",
-			alt ? "(alt)" : "",
+			elf2 ? "(elf2)" : (alt ? "(alt)" : ""),
 			ioa, iom, efn + 1);
 	}
 
@@ -222,16 +245,22 @@ public class HexKeyPad extends JFrame
 		int mn = btn.getMnemonic();
 		mn &= 0xff;
 		//System.err.format("KEY %d\n", mn);
-		key = mn;
-		if (alt || mn == index) {
-			intr.setEF(src, efn, !alt);
+		if (elf2) {
+			key = ((key << 4) | mn) & 0xff;
+		} else {
+			key = mn;
+			if (alt || mn == index) {
+				intr.setEF(src, efn, !alt);
+			}
 		}
 	}
 	public void mouseReleased(MouseEvent e) {
 		AbstractButton btn = (AbstractButton)e.getSource();
 		int mn = btn.getMnemonic();
 		mn &= 0xff;
-		key = -1;
-		intr.setEF(src, efn, alt);
+		if (!elf2) {
+			key = -1;
+			intr.setEF(src, efn, alt);
+		}
 	}
 }
