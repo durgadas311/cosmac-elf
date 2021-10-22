@@ -50,9 +50,14 @@ public class VirtualCOSMAC_ELF {
 		front_end.getContentPane().setName("COS/MAC ELF Emulator");
 		front_end.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		front_end.getContentPane().setBackground(new Color(100, 100, 100));
+		front_end.setFocusTraversalKeysEnabled(false);
+		front_end.setFocusable(true);
 
 		COSMAC_ELF elf = new COSMAC_ELF(props, null); // may add 'screen'...
 		front_end.add(elf.getFrontPanel());
+		if (elf.getFrontPanel().keyListener() != null) {
+			front_end.addKeyListener(elf.getFrontPanel().keyListener());
+		}
 		ELFOperator op = new ELFOperator(front_end, props);
 		op.setCommander(elf.getCommander());
 

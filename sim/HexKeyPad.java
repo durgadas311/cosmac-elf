@@ -24,7 +24,7 @@ import javax.sound.sampled.*;
 // Also a "detached" version for embedding in some other JFrame...
 
 public class HexKeyPad extends JFrame
-		implements IODevice, MouseListener {
+		implements IODevice, MouseListener, KeyListener, ActionListener {
 
 	private JPanel kpd;
 	private JButton[] btns;
@@ -43,6 +43,7 @@ public class HexKeyPad extends JFrame
 	private boolean elf2;
 
 	public JPanel getKeyPad() { return kpd; }
+	public JButton getInBtn() { return btns[16]; }
 
 	public HexKeyPad(Properties props, Interruptor intr) {
 		super("ELF Hex Keypad");
@@ -97,12 +98,12 @@ public class HexKeyPad extends JFrame
 			intr.setEF(src, efn, alt);	// "alt" is active low EFn
 		}
 
-		btns = new JButton[16];
+		btns = new JButton[17];
 		Color bg = new Color(0,0,0);
 		Color ky = new Color(240,240,220);
 		Color tx = new Color(0,0,0);
 		Border lb = BorderFactory.createBevelBorder(BevelBorder.RAISED);
-		for (int x = 0; x < 16; ++x) {
+		for (int x = 0; x < 17; ++x) {
 			btns[x] = new JButton();
 			btns[x].setPreferredSize(new Dimension(50, 50));
 			btns[x].setBackground(ky);
@@ -110,9 +111,21 @@ public class HexKeyPad extends JFrame
 			btns[x].setBorder(lb);
 			btns[x].setFocusPainted(false);
 			btns[x].setPressedIcon(null);
-			btns[x].addMouseListener(this);
-			btns[x].setMnemonic(x + 0x1000);
-			btns[x].setText(String.format("%X", x));
+			btns[x].setFocusable(false);
+			if (x < 16) {
+				btns[x].setMnemonic(x + 0x1000);
+				// TODO: decoder vs. scanned, not ELF2 vs ...
+				if (elf2) {
+					btns[x].addActionListener(this);
+				} else {
+					btns[x].addMouseListener(this);
+				}
+				btns[x].setText(String.format("%X", x));
+			} else {
+				// must be IN button...
+				btns[x].setText("I");
+				btns[x].setFont(new Font("Serif", Font.BOLD, 12));
+			}
 		}
 		getContentPane().setBackground(bg);
 		kpd = new JPanel();
@@ -129,11 +142,14 @@ public class HexKeyPad extends JFrame
 		gc.gridheight = 1;
 		gc.anchor = GridBagConstraints.CENTER;
 
-		JPanel pan = new JPanel();
-		pan.setPreferredSize(new Dimension(20, 20));
-		pan.setOpaque(false);
-		gb.setConstraints(pan, gc);
-		kpd.add(pan);
+		JPanel pan;
+		if (!elf2) {
+			pan = new JPanel();
+			pan.setPreferredSize(new Dimension(20, 20));
+			pan.setOpaque(false);
+			gb.setConstraints(pan, gc);
+			kpd.add(pan);
+		}
 		++gc.gridx;
 		++gc.gridy;
 
@@ -191,13 +207,13 @@ public class HexKeyPad extends JFrame
 		++gc.gridx;
 		++gc.gridy;
 
-		pan = new JPanel();
-		pan.setPreferredSize(new Dimension(20, 20));
-		pan.setOpaque(false);
-		gb.setConstraints(pan, gc);
-		kpd.add(pan);
-
 		if (!elf2) {
+			pan = new JPanel();
+			pan.setPreferredSize(new Dimension(20, 20));
+			pan.setOpaque(false);
+			gb.setConstraints(pan, gc);
+			kpd.add(pan);
+
 			add(kpd);
 			pack();
 			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -236,7 +252,20 @@ public class HexKeyPad extends JFrame
 		return ret;
 	}
 
-	// MouseListener
+	// ActionListener
+	// Only used for ELF2-style (keyboard-encoder) instances
+	public void actionPerformed(ActionEvent e) {
+		int k = -1;
+		if (e.getSource() instanceof JButton) {
+			JButton b = (JButton)e.getSource();
+			k = b.getMnemonic();
+		} else {
+			return;
+		}
+		key = ((key << 4) | (k & 0x0f)) & 0xff;
+	}
+
+	// MouseListener - only for scanned keypads... (not ELF2)
 	public void mouseClicked(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
@@ -245,22 +274,33 @@ public class HexKeyPad extends JFrame
 		int mn = btn.getMnemonic();
 		mn &= 0xff;
 		//System.err.format("KEY %d\n", mn);
-		if (elf2) {
-			key = ((key << 4) | mn) & 0xff;
-		} else {
-			key = mn;
-			if (alt || mn == index) {
-				intr.setEF(src, efn, !alt);
-			}
+		key = mn;
+		if (alt || mn == index) {
+			intr.setEF(src, efn, !alt);
 		}
 	}
 	public void mouseReleased(MouseEvent e) {
 		AbstractButton btn = (AbstractButton)e.getSource();
 		int mn = btn.getMnemonic();
 		mn &= 0xff;
-		if (!elf2) {
-			key = -1;
-			intr.setEF(src, efn, alt);
+		key = -1;
+		intr.setEF(src, efn, alt);
+	}
+
+	// For now, this only works with ELF2 style
+	public void keyTyped(KeyEvent e) {
+		// e.getKeyCode() is not valid in keyTyped...
+		int c = e.getKeyChar();
+		if (c == '\n' || c == 'I' || c == 'i') {
+			btns[16].doClick();
+		} else if (c >= '0' && c <= '9') {
+			btns[c & 0x0f].doClick();
+		} else if (c >= 'A' && c <= 'F') {
+			btns[10 + (c - 'A')].doClick();
+		} else if (c >= 'a' && c <= 'f') {
+			btns[10 + (c - 'a')].doClick();
 		}
 	}
+	public void keyReleased(KeyEvent e) {}
+	public void keyPressed(KeyEvent e) {}
 }

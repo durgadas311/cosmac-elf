@@ -10,8 +10,10 @@ public class ELFMemory extends ELFRoms implements Memory {
 	private int mask;
 	private boolean rom = false;
 
-	public ELFMemory(Properties props) {
+	public ELFMemory(Properties props, int model) {
 		super(props);
+		// TODO: any model-specific differences?
+		//boolean elf2 = (model == Interruptor.ELF2);
 		int ramsize = 256;
 		String s = props.getProperty("ram");
 		if (s != null) {
@@ -20,6 +22,7 @@ public class ELFMemory extends ELFRoms implements Memory {
 				mult = 1024;
 				s = s.substring(0, s.length() - 1);
 			}
+			// TODO: need to fix all this, and 'mask'...
 			ramsize = Integer.valueOf(s) * mult;
 			if ((ramsize & 0x00ff) != 0) {
 				// force multiple of 256.

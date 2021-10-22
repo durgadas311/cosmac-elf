@@ -1,6 +1,6 @@
 # COS/MAC ELF Simulator
 
-![Example](photos/screenshot-4.png)
+![Example](photos/screenshot-5.png)
 ![Example](photos/pixie-2.png)
 
 This simulator aspires to replicate the experience of
@@ -35,6 +35,7 @@ The "Debug" menu provides methods for debugging and other conveniences.
 
 ![Example](photos/keypad-1.png)
 ![Example](photos/teletype-2.png)
+![Example](photos/elf2-1.png)
 
 An original ELF from James Brown
 (http://www.cosmacelf.com/gallery/elf-and-microtutors/)

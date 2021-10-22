@@ -41,6 +41,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 	private CDP1802Disassembler disas;
 	private ReentrantLock cpuLock;
 	private int iodecoder = Interruptor.SIMPLE;
+	private int model = Interruptor.ELF;
 
 	// Missed 2mS interrupt statistics
 	private long backlogNs;
@@ -86,6 +87,8 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		} else {
 			System.err.format("Using configuration from %s\n", s);
 		}
+		setModel(props);
+		boolean elf2 = (model == Interruptor.ELF2);
 
 		s = props.getProperty("iodecoder");
 		if (s != null) {
@@ -103,15 +106,17 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 		traceProp = props.getProperty("trace");
 
 		cpu = new CDP1802(this);
-		mem = new ELFMemory(props);
+		mem = new ELFMemory(props, model);
 		fp = new ELFFrontPanel(props, this);
 
 		addDevice(fp);
 		dmas.add(fp);
 
-		if (props.getProperty("hexkeypad") != null) {
+		// TODO: Elf-II never had additional keypad?
+		if (!elf2 && props.getProperty("hexkeypad") != null) {
 			addDevice(new HexKeyPad(props, this));
 		}
+		// TODO: was Elf-II video always installed?
 		if (props.getProperty("pixie") != null) {
 			// TODO: setSpeed(17xxxxx)...
 			PixieCrt crt = new PixieCrt(props, this);
@@ -127,6 +132,18 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 			addDevice(new CDP1854(props, s, this));
 		}
 		disas = new CDP1802Disassembler(mem);
+	}
+
+	private void setModel(Properties props) {
+		model = Interruptor.ELF;
+		String s = props.getProperty("model");
+		if (s == null) return;
+		if (s.equalsIgnoreCase("elf2") ||
+			s.equalsIgnoreCase("elfii") ||
+			s.equalsIgnoreCase("elf-ii")) {
+			model = Interruptor.ELF2;
+		}
+		// TODO: check UNKNOWN?
 	}
 
 	public void reset() {
@@ -217,6 +234,7 @@ public class COSMAC_ELF implements Computer, ELFCommander, Interruptor, Runnable
 
 	/////////////////////////////////////////////
 	/// Interruptor interface implementation ///
+	public int getModel() { return model; }
 	public int IODecoder() { return iodecoder; }
 
 	public int registerINT() {

@@ -10,6 +10,7 @@ import javax.swing.border.*;
 import javax.swing.Timer;
 import javax.sound.sampled.*;
 
+// Default:
 //    0   1    2    3     4     5     6      7    8     9
 // 0: +-------------------------------------------------+
 // 1: |                     LED                         |
@@ -19,13 +20,29 @@ import javax.sound.sampled.*;
 // 5: | <IN> [LOAD]                       [MP]   [RUN]  |
 // 6: |                                                 |
 // 7: | [7]  [6]   [5]   [4]   [3]   [2]   [1]   [0]    |
-// 8: +-------------------------------------------------+
+// 8: |                                                 |
+// 9: +-------------------------------------------------+
 //
+// Elf-II:
+//    0   1    2    3     4     5     6      7    8     9
+// 0: +-------------------------------------------------+
+// 1: |                                                 |
+// 2: |                 DISP   DISP   LED               |
+// 3: |                    {ROM}                        |
+// 4: |                                                 |
+// 5: |      |^^^^^^^^^^^^^^^^^^^|   [RUN]              |
+// 6: |      |      KEYPAD       |   [LOAD]             |
+// 7: |      |                   |   [MP]               |
+// 8: |      |___________________|   <IN>               |
+// 9: +-------------------------------------------------+
+//
+// [..] = toggle switch
 // <..> = momentary switch
 // {..} = jumper
 
 public class ELFFrontPanel extends JPanel
-		implements IODevice, QListener, DMAController, MouseListener {
+		implements IODevice, QListener, DMAController,
+			MouseListener, ActionListener {
 	static final int LOAD = 8;	// index/id of LOAD switch
 	static final int MP = 9;	// index/id of MP switch
 	static final int RUN = 10;	// index/id of RUN switch
@@ -33,9 +50,12 @@ public class ELFFrontPanel extends JPanel
 	static final int IN = 12;	// index/id of IN switch
 	private Font tiny;
 	private Font lesstiny;
-	private Font til311;
+	private Font dspFont;	// or whatever display is configured
+	private int fw;
 	private Color wdw = new Color(70, 0, 0);
 	private Color phenolic = new Color(214, 176, 132);
+	private Color soldermask = new Color(175, 191, 160);
+	private Color pcb;
 	private boolean input = false;
 	private Interruptor intr;
 	private int src;
@@ -54,15 +74,16 @@ public class ELFFrontPanel extends JPanel
 	boolean elf2;
 	int width = 400;
 
+	public KeyListener keyListener() { return kpd; }
+
 	public ELFFrontPanel(Properties props, Interruptor intr) {
 		super();
 		this.intr = intr;
 		src = intr.registerINT();
 		intr.addDMAController(this);
 		intr.addQListener(this);
-		String s = props.getProperty("model");
-		elf2 = (s != null && s.equalsIgnoreCase("elf2"));
-		s = props.getProperty("elffrontpanel_port");
+		elf2 = (intr.getModel() == Interruptor.ELF2);
+		String s = props.getProperty("elffrontpanel_port");
 		if (s != null) {
 			int n = Integer.valueOf(s);
 			if (n < 1 || n > 7) {
@@ -91,48 +112,61 @@ public class ELFFrontPanel extends JPanel
 			ioa = 4;
 			iom = 4;
 		}
-		boolean auto = (props.getProperty("autorun") != null);
-		if (elf2) {
-			width = 460;
-		} else {
-			width = 420;
-		}
-
 		tiny = new Font("Sans-serif", Font.PLAIN, 8);
 		lesstiny = new Font("Sans-serif", Font.PLAIN, 10);
+
+		if (elf2) {
+			configElf2(props);
+		} else {
+			configElf(props);
+		}
+		// Now safe to do this?
+		intr.setSwitch(LOAD, btns[LOAD].isSelected());
+		intr.setSwitch(RUN, btns[RUN].isSelected());
+		System.err.format("ELFFrontPanel at port %d mask %d EF%d\n",
+			ioa, iom, efn + 1);
+	}
+
+	private void configElf(Properties props) {
+		Color bg = new Color(50, 50, 50);
+		pcb = phenolic;
+		width = 420;
+
+		boolean auto = (props.getProperty("autorun") != null);
 		btns = new JCheckBox[12];
 		if (aux_disp) {
 			disp = new JLabel[4];
 		} else {
 			disp = new JLabel[2];
 		}
-		Border lb = BorderFactory.createBevelBorder(BevelBorder.RAISED);
-		Color bg = new Color(50, 50, 50);
 		Icon sw_w_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_on.png"));
 		Icon sw_w_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_off.png"));
 		Icon sw_r_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_red_on.png"));
 		Icon sw_r_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_red_off.png"));
 		Icon pb_r_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/pb_on.png"));
 		Icon pb_r_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/pb_off.png"));
+		// TODO: configurable display type?
 		String f = "TIL311.ttf";
 		float fz = 35f;
+		fw = 25;
 		try {
 			java.io.InputStream ttf;
 			ttf = ELFFrontPanel.class.getResourceAsStream(f);
 			if (ttf != null) {
-				til311 = Font.createFont(Font.TRUETYPE_FONT, ttf);
-				til311 = til311.deriveFont(fz);
+				dspFont = Font.createFont(Font.TRUETYPE_FONT, ttf);
+				dspFont = dspFont.deriveFont(fz);
 			}
 		} catch (Exception ee) {
 			ee.printStackTrace();
 		}
-		if (til311 == null) {
+		if (dspFont == null) {
 			System.err.format("No TIL311\n");
 		}
 		qLed = new RoundLED(LED.Colors.RED);
 		in = new JButton();
 		in.setPreferredSize(new Dimension(50, 30));
 		in.addMouseListener(this);
+		in.addActionListener(this);
 		in.setFocusable(false);
 		in.setFocusPainted(false);
 		in.setBorderPainted(false);
@@ -149,7 +183,6 @@ public class ELFFrontPanel extends JPanel
 		in.setMnemonic(0x100c);
 		// 0-7 are data bits, ...
 		for (int x = 0; x < 11; ++x) {
-			if (elf2 && x < LOAD) continue;
 			btns[x] = new JCheckBox();
 			btns[x].setPreferredSize(new Dimension(50, 30));
 			btns[x].setHorizontalAlignment(SwingConstants.CENTER);
@@ -167,6 +200,8 @@ public class ELFFrontPanel extends JPanel
 		gb = new GridBagLayout();
 		setLayout(gb);
 		setOpaque(false);
+		setBackground(bg);
+		setOpaque(true);
 		gc = new GridBagConstraints();
 		gc.fill = GridBagConstraints.NONE;
 		gc.gridx = 0;
@@ -178,15 +213,6 @@ public class ELFFrontPanel extends JPanel
 		gc.anchor = GridBagConstraints.CENTER;
 
 		JPanel pan;
-		if (false) {
-			gc.gridy = 0;
-			gc.gridx = 0;
-			pan = new JPanel();
-			pan.setPreferredSize(new Dimension(10, 10));
-			pan.setOpaque(false);
-			gb.setConstraints(pan, gc);
-			add(pan);
-		}
 		gc.gridy = 4;
 		gc.gridx = 0;
 		pan = new JPanel();
@@ -194,16 +220,14 @@ public class ELFFrontPanel extends JPanel
 		pan.setOpaque(false);
 		gb.setConstraints(pan, gc);
 		add(pan);
-		if (!elf2) {
-			gc.gridy = 6;
-			gc.gridx = 0;
-			pan = new JPanel();
-			pan.setPreferredSize(new Dimension(10, 10));
-			pan.setOpaque(false);
-			gb.setConstraints(pan, gc);
-			add(pan);
-		}
-		gc.gridy = 8;
+		gc.gridy = 6;
+		gc.gridx = 0;
+		pan = new JPanel();
+		pan.setPreferredSize(new Dimension(10, 10));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
+		gc.gridy = 9;
 		gc.gridx = 9;
 		pan = new JPanel();
 		pan.setPreferredSize(new Dimension(10, 10));
@@ -242,19 +266,17 @@ public class ELFFrontPanel extends JPanel
 		btns[RUN].addMouseListener(this);
 		gb.setConstraints(btns[RUN], gc);
 		add(btns[RUN]);
-		if (!elf2) {
-			// DATA buttons
-			gc.gridy = 7;
-			gc.gridx = 1;
-			for (int x = 7; x >= 0; --x) {
-				if ((x & 3) == 0) {
-					btns[x].setSelectedIcon(sw_r_on);
-					btns[x].setIcon(sw_r_off);
-				}
-				gb.setConstraints(btns[x], gc);
-				add(btns[x]);
-				++gc.gridx;
+		// DATA buttons
+		gc.gridy = 7;
+		gc.gridx = 1;
+		for (int x = 7; x >= 0; --x) {
+			if ((x & 3) == 0) {
+				btns[x].setSelectedIcon(sw_r_on);
+				btns[x].setIcon(sw_r_off);
 			}
+			gb.setConstraints(btns[x], gc);
+			add(btns[x]);
+			++gc.gridx;
 		}
 		// Button Labels
 		JLabel lab = getLabel("IN");
@@ -278,25 +300,14 @@ public class ELFFrontPanel extends JPanel
 		gb.setConstraints(lab, gc);
 		add(lab);
 
-		if (elf2) {
-			props.setProperty("hexkeypad_elf2", "yes");
-			kpd = new HexKeyPad(props, intr);
-			pan = kpd.getKeyPad();
-			gc.gridy = 6;
-			gc.gridx = 3;
-			gc.gridwidth = 4;
-			gb.setConstraints(pan, gc);
-			add(pan);
-		} else {
-			// Data buttons labels
-			gc.gridy = 6;
-			gc.gridx = 1;
-			for (int x = 7; x >= 0; --x) {
-				lab = getLabel(String.format("%d", x));
-				gb.setConstraints(lab, gc);
-				add(lab);
-				++gc.gridx;
-			}
+		// Data buttons labels
+		gc.gridy = 6;
+		gc.gridx = 1;
+		for (int x = 7; x >= 0; --x) {
+			lab = getLabel(String.format("%d", x));
+			gb.setConstraints(lab, gc);
+			add(lab);
+			++gc.gridx;
 		}
 		// Q LED
 		pan = getQLED();
@@ -326,11 +337,212 @@ public class ELFFrontPanel extends JPanel
 			}
 			intr.setSwitch(PROM, btns[PROM].isSelected());
 		}
-		// Now safe to do this?
-		intr.setSwitch(LOAD, btns[LOAD].isSelected());
-		intr.setSwitch(RUN, btns[RUN].isSelected());
-		System.err.format("ELFFrontPanel at port %d mask %d EF%d\n",
-			ioa, iom, efn + 1);
+	}
+
+	private void configElf2(Properties props) {
+		pcb = soldermask;
+		Color bg = pcb;
+		width = 460;
+
+		boolean auto = (props.getProperty("autorun") != null);
+		aux_disp = false;
+		btns = new JCheckBox[12];
+		disp = new JLabel[2];
+		Icon sw_w_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_on.png"));
+		Icon sw_w_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_off.png"));
+		// TODO: 7-segment displays... or configurable?
+		//String f = "TIL311.ttf";
+		String f = "FND500x.ttf";
+		float fz = 30f;
+		fw = 30;
+		try {
+			java.io.InputStream ttf;
+			ttf = ELFFrontPanel.class.getResourceAsStream(f);
+			if (ttf != null) {
+				dspFont = Font.createFont(Font.TRUETYPE_FONT, ttf);
+				dspFont = dspFont.deriveFont(fz);
+			}
+		} catch (Exception ee) {
+			ee.printStackTrace();
+		}
+		if (dspFont == null) {
+			System.err.format("No %s\n", f);
+		}
+		props.setProperty("hexkeypad_elf2", "yes");
+		kpd = new HexKeyPad(props, intr);
+		qLed = new RoundLED(LED.Colors.RED);
+		in = kpd.getInBtn();
+		in.addMouseListener(this);
+		in.addActionListener(this);
+		in.setMnemonic(0x100c);
+		// 0-7 are data bits, ... not used here
+		for (int x = LOAD; x < 11; ++x) {
+			btns[x] = new JCheckBox();
+			btns[x].setPreferredSize(new Dimension(50, 30));
+			btns[x].setHorizontalAlignment(SwingConstants.CENTER);
+			btns[x].setFocusable(false);
+			btns[x].setFocusPainted(false);
+			btns[x].setBorderPainted(false);
+			btns[x].setSelectedIcon(sw_w_on);
+			btns[x].setIcon(sw_w_off);
+			btns[x].setOpaque(false);
+			btns[x].setBackground(bg);
+			btns[x].setContentAreaFilled(false);
+			btns[x].setMnemonic(x + 0x1000);
+			//btns[x].setText(btx[x]);
+		}
+		gb = new GridBagLayout();
+		setLayout(gb);
+		setOpaque(false);
+		setBackground(bg);
+		setOpaque(true);
+		gc = new GridBagConstraints();
+		gc.fill = GridBagConstraints.NONE;
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.weightx = 0;
+		gc.weighty = 0;
+		gc.gridwidth = 1;
+		gc.gridheight = 1;
+		gc.anchor = GridBagConstraints.CENTER;
+
+		JPanel pan;
+		gc.gridy = 4;
+		gc.gridx = 0;
+		pan = new JPanel();
+		pan.setPreferredSize(new Dimension(10, 10));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
+		gc.gridy = 9;
+		gc.gridx = 9;
+		pan = new JPanel();
+		pan.setPreferredSize(new Dimension(10, 10));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
+		// misc spacing
+		gc.gridy = 2;
+		gc.gridx = 1;
+		pan = new JPanel();
+		pan.setPreferredSize(new Dimension(20, 20));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
+		gc.gridy = 2;
+		gc.gridx = 2;
+		pan = new JPanel();
+		pan.setPreferredSize(new Dimension(50, 20));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
+		gc.gridy = 2;
+		gc.gridx = 3;
+		pan = new JPanel();
+		pan.setPreferredSize(new Dimension(50, 20));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
+		gc.gridy = 2;
+		gc.gridx = 8;
+		pan = new JPanel();
+		pan.setPreferredSize(new Dimension(50, 20));
+		pan.setOpaque(false);
+		gb.setConstraints(pan, gc);
+		add(pan);
+
+		// [IN] button
+		gc.gridy = 8;
+		gc.gridx = 6;
+		gc.gridwidth = 2;
+		gb.setConstraints(in, gc);
+		add(in);
+		gc.gridwidth = 1;
+		// [LOAD] button
+		gc.gridy = 6;
+		gc.gridx = 6;
+		if (!auto) {
+			btns[LOAD].setSelected(true);
+		}
+		btns[LOAD].addMouseListener(this);
+		gb.setConstraints(btns[LOAD], gc);
+		add(btns[LOAD]);
+		// [MP] button
+		gc.gridy = 7;
+		gc.gridx = 6;
+		btns[MP].setSelectedIcon(sw_w_on);
+		btns[MP].setIcon(sw_w_off);
+		btns[MP].addMouseListener(this); // not used
+		gb.setConstraints(btns[MP], gc);
+		add(btns[MP]);
+		// [RUN] button
+		gc.gridy = 5;
+		gc.gridx = 6;
+		if (auto) {
+			btns[RUN].setSelected(true);
+		}
+		btns[RUN].addMouseListener(this);
+		gb.setConstraints(btns[RUN], gc);
+		add(btns[RUN]);
+		// Button Labels
+		JLabel lab;
+		lab = getLabel("LOAD");
+		lab.setPreferredSize(new Dimension(50, 50));
+		gc.gridy = 6;
+		gc.gridx = 7;
+		gb.setConstraints(lab, gc);
+		add(lab);
+		lab = getLabel("MP");
+		lab.setPreferredSize(new Dimension(50, 50));
+		gc.gridy = 7;
+		gc.gridx = 7;
+		gb.setConstraints(lab, gc);
+		add(lab);
+		lab = getLabel("RUN");
+		lab.setPreferredSize(new Dimension(50, 50));
+		gc.gridy = 5;
+		gc.gridx = 7;
+		gb.setConstraints(lab, gc);
+		add(lab);
+
+		pan = kpd.getKeyPad();
+		gc.gridy = 5;
+		gc.gridx = 2;
+		gc.gridwidth = 4;
+		gc.gridheight = 4;
+		gb.setConstraints(pan, gc);
+		add(pan);
+		gc.gridheight = 1;
+		// Q LED
+		pan = getQLED();
+		pan.setPreferredSize(new Dimension(20, 20));
+		gc.gridy = 2;
+		gc.gridx = 5;
+		gc.gridwidth = 1;
+		gb.setConstraints(pan, gc);
+		add(pan);
+
+		pan = getHexDisplay();
+		pan.setPreferredSize(new Dimension(75, 70));
+		gc.gridy = 2;
+		gc.gridx = 4;
+		gc.gridwidth = 1;
+		gb.setConstraints(pan, gc);
+		add(pan);
+
+		// If ROM...
+		if (props.getProperty("prom") != null) {
+			pan = getROMJumper();
+			gc.gridy = 3;
+			gc.gridx = 0;
+			gc.gridwidth = 10;
+			gb.setConstraints(pan, gc);
+			add(pan);
+			if (auto) {
+				btns[PROM].setSelected(true);
+			}
+			intr.setSwitch(PROM, btns[PROM].isSelected());
+		}
 	}
 
 	private JPanel getROMJumper() {
@@ -345,12 +557,12 @@ public class ELFFrontPanel extends JPanel
 		btns[PROM].setSelectedIcon(jp_on);
 		btns[PROM].setIcon(jp_off);
 		btns[PROM].setOpaque(false);
-		btns[PROM].setBackground(phenolic);
+		btns[PROM].setBackground(pcb);
 		btns[PROM].setContentAreaFilled(false);
 		btns[PROM].setMnemonic(PROM + 0x1000);
 		btns[PROM].addMouseListener(this);
 		JPanel pan = new JPanel();
-		pan.setBackground(phenolic);
+		pan.setBackground(pcb);
 		pan.setOpaque(true);
 		pan.setPreferredSize(new Dimension(width, 20));
 		pan.add(btns[PROM]);
@@ -360,7 +572,7 @@ public class ELFFrontPanel extends JPanel
 
 	private JPanel getQLED() {
 		JPanel pan = new JPanel();
-		pan.setBackground(phenolic);
+		pan.setBackground(pcb);
 		pan.setOpaque(true);
 		pan.setPreferredSize(new Dimension(width, 20));
 		pan.add(qLed);
@@ -369,7 +581,7 @@ public class ELFFrontPanel extends JPanel
 
 	private JPanel getHexDisplay() {
 		JPanel pan = new JPanel();
-		pan.setBackground(phenolic);
+		pan.setBackground(pcb);
 		pan.setOpaque(true);
 		pan.setPreferredSize(new Dimension(width, 70));
 		disp[0] = getDisplay();
@@ -395,11 +607,11 @@ public class ELFFrontPanel extends JPanel
 
 	private JLabel getDisplay() {
 		JLabel dsp = new JLabel("@");
-		dsp.setFont(til311);
+		dsp.setFont(dspFont);
 		dsp.setForeground(Color.red);
 		dsp.setBackground(wdw);
 		dsp.setOpaque(true);
-		dsp.setPreferredSize(new Dimension(25, 50));
+		dsp.setPreferredSize(new Dimension(fw, 50));
 		return dsp;
 	}
 
@@ -479,6 +691,21 @@ public class ELFFrontPanel extends JPanel
 		return ret;
 	}
 
+	// ActionListener
+	// For remote operation of IN button...
+	// TODO: simulate EFn for some period...
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() instanceof JButton) {
+			JButton b = (JButton)e.getSource();
+			int k = b.getMnemonic() & 0xff;
+			if (k != IN) return;
+			if (btns[LOAD].isSelected()) {
+				input = true;
+				intr.raiseDMA_IN(src);
+			}
+		}
+	}
+
 	// MouseListener
 	public void mouseClicked(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e) {}
@@ -490,10 +717,6 @@ public class ELFFrontPanel extends JPanel
 		mn &= 0xff;
 		switch (mn) {
 		case IN:
-			if (btns[LOAD].isSelected()) {
-				input = true;
-				intr.raiseDMA_IN(src);
-			}
 			intr.setEF(src, efn, true);
 			break;
 		}
