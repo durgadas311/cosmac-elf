@@ -53,6 +53,7 @@ public class ELFFrontPanel extends JPanel
 	private Color wdw = new Color(70, 0, 0);
 	private Color phenolic = new Color(214, 176, 132);
 	private Color soldermask = new Color(175, 191, 160);
+	private Color cased = new Color(100, 155, 224);
 	private Color pcb;
 	private boolean input = false;
 	private Interruptor intr;
@@ -357,6 +358,10 @@ public class ELFFrontPanel extends JPanel
 		Color bg = pcb;
 		width = 460;
 
+		boolean encased = (props.getProperty("elf2_case") != null);
+		if (encased) {
+			bg = pcb = cased;
+		}
 		boolean auto = (props.getProperty("autorun") != null);
 		aux_disp = false;
 		btns = new JCheckBox[12];
@@ -402,6 +407,30 @@ public class ELFFrontPanel extends JPanel
 		gc.anchor = GridBagConstraints.CENTER;
 
 		JPanel pan;
+		JLabel lab;
+		if (encased) {
+			gc.gridy = 0;
+			gc.gridx = 0;
+			pan = new JPanel();
+			pan.setPreferredSize(new Dimension(10, 10));
+			pan.setOpaque(false);
+			gb.setConstraints(pan, gc);
+			add(pan);
+			lab = getLabel("DISPLAY");
+			lab.setPreferredSize(new Dimension(75, 20));
+			gc.gridy = 1;
+			gc.gridx = 4;
+			gc.gridwidth = 1;
+			gb.setConstraints(lab, gc);
+			add(lab);
+			gc.gridwidth = 1;
+			lab = getLabel("Q");
+			lab.setPreferredSize(new Dimension(25, 20));
+			gc.gridy = 1;
+			gc.gridx = 5;
+			gb.setConstraints(lab, gc);
+			add(lab);
+		}
 		gc.gridy = 4;
 		gc.gridx = 0;
 		pan = new JPanel();
@@ -480,7 +509,6 @@ public class ELFFrontPanel extends JPanel
 		gb.setConstraints(btns[RUN], gc);
 		add(btns[RUN]);
 		// Button Labels
-		JLabel lab;
 		lab = getLabel("LOAD");
 		lab.setPreferredSize(new Dimension(50, 50));
 		gc.gridy = 6;
@@ -510,7 +538,13 @@ public class ELFFrontPanel extends JPanel
 		gc.gridheight = 1;
 		// Q LED
 		pan = getQLED();
-		pan.setPreferredSize(new Dimension(20, 20));
+		if (encased) {
+			pan.setPreferredSize(new Dimension(25, 70));
+			pan.setBackground(wdw);
+			pan.setOpaque(true);
+		} else {
+			pan.setPreferredSize(new Dimension(20, 20));
+		}
 		gc.gridy = 2;
 		gc.gridx = 5;
 		gc.gridwidth = 1;
@@ -519,6 +553,10 @@ public class ELFFrontPanel extends JPanel
 
 		pan = getHexDisplay();
 		pan.setPreferredSize(new Dimension(75, 70));
+		if (encased) {
+			pan.setBackground(wdw);
+			pan.setOpaque(true);
+		}
 		gc.gridy = 2;
 		gc.gridx = 4;
 		gc.gridwidth = 1;
@@ -567,27 +605,50 @@ public class ELFFrontPanel extends JPanel
 
 	private JPanel getQLED() {
 		JPanel pan = new JPanel();
+		pan.setLayout(new GridBagLayout());
 		pan.setBackground(pcb);
 		pan.setOpaque(true);
 		pan.setPreferredSize(new Dimension(width, 20));
-		pan.add(qLed);
+		pan.add(qLed, new GridBagConstraints());
 		return pan;
 	}
 
 	private JPanel getHexDisplay() {
 		JPanel pan = new JPanel();
+		pan.setLayout(new GridBagLayout());
+		GridBagConstraints gc = new GridBagConstraints();
+		gc.gridx = 0;
+		gc.gridy = 0;
 		pan.setBackground(pcb);
 		pan.setOpaque(true);
 		pan.setPreferredSize(new Dimension(width, 70));
 		disp[0] = getDisplay();
-		pan.add(disp[0]);
+		pan.add(disp[0], gc);
+		++gc.gridx;
+		JPanel pn = new JPanel();
+		pn.setPreferredSize(new Dimension(5, 5));
+		pn.setOpaque(false);
+		pan.add(pn, gc);
+		++gc.gridx;
 		disp[1] = getDisplay();
-		pan.add(disp[1]);
+		pan.add(disp[1], gc);
 		if (aux_disp) {
+			++gc.gridx;
+			pn = new JPanel();
+			pn.setPreferredSize(new Dimension(5, 5));
+			pn.setOpaque(false);
+			pan.add(pn, gc);
+			++gc.gridx;
 			disp[2] = getDisplay();
-			pan.add(disp[2]);
+			pan.add(disp[2], gc);
+			++gc.gridx;
+			pn = new JPanel();
+			pn.setPreferredSize(new Dimension(5, 5));
+			pn.setOpaque(false);
+			pan.add(pn, gc);
+			++gc.gridx;
 			disp[3] = getDisplay();
-			pan.add(disp[3]);
+			pan.add(disp[3], gc);
 		}
 		return pan;
 	}
