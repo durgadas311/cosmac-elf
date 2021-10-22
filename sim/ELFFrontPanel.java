@@ -48,8 +48,6 @@ public class ELFFrontPanel extends JPanel
 	static final int RUN = 10;	// index/id of RUN switch
 	static final int PROM = 11;	// index/id of PROM jumper
 	static final int IN = 12;	// index/id of IN switch
-	private Font tiny;
-	private Font lesstiny;
 	private Font dspFont;	// or whatever display is configured
 	private int fw;
 	private Color wdw = new Color(70, 0, 0);
@@ -112,8 +110,7 @@ public class ELFFrontPanel extends JPanel
 			ioa = 4;
 			iom = 4;
 		}
-		tiny = new Font("Sans-serif", Font.PLAIN, 8);
-		lesstiny = new Font("Sans-serif", Font.PLAIN, 10);
+		getDispFont(props);
 
 		if (elf2) {
 			configElf2(props);
@@ -125,6 +122,39 @@ public class ELFFrontPanel extends JPanel
 		intr.setSwitch(RUN, btns[RUN].isSelected());
 		System.err.format("ELFFrontPanel at port %d mask %d EF%d\n",
 			ioa, iom, efn + 1);
+	}
+
+	private void getDispFont(Properties props) {
+		String f = props.getProperty("elffrontpanel_disp");
+		if (f == null) {
+			f = elf2 ? "FND500" : "TIL311";
+		}
+		float fz = 35f;	// values for TIL311
+		fw = 25;	//
+		if (f.equalsIgnoreCase("TIL311")) {
+			f = "TIL311.ttf";
+		} else if (f.equalsIgnoreCase("FND500")) {
+			f = "FND500x.ttf";
+			fz = 30f;
+			fw = 30;
+		} else {
+			System.err.format("Unrecognized display type %s\n", f);
+			f = "TIL311.ttf";
+		}
+		try {
+			// TODO: search local dir first?
+			java.io.InputStream ttf;
+			ttf = ELFFrontPanel.class.getResourceAsStream(f);
+			if (ttf != null) {
+				dspFont = Font.createFont(Font.TRUETYPE_FONT, ttf);
+				dspFont = dspFont.deriveFont(fz);
+			}
+		} catch (Exception ee) {
+			ee.printStackTrace();
+		}
+		if (dspFont == null) {
+			System.err.format("No font %s\n", f);
+		}
 	}
 
 	private void configElf(Properties props) {
@@ -145,23 +175,6 @@ public class ELFFrontPanel extends JPanel
 		Icon sw_r_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_red_off.png"));
 		Icon pb_r_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/pb_on.png"));
 		Icon pb_r_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/pb_off.png"));
-		// TODO: configurable display type?
-		String f = "TIL311.ttf";
-		float fz = 35f;
-		fw = 25;
-		try {
-			java.io.InputStream ttf;
-			ttf = ELFFrontPanel.class.getResourceAsStream(f);
-			if (ttf != null) {
-				dspFont = Font.createFont(Font.TRUETYPE_FONT, ttf);
-				dspFont = dspFont.deriveFont(fz);
-			}
-		} catch (Exception ee) {
-			ee.printStackTrace();
-		}
-		if (dspFont == null) {
-			System.err.format("No TIL311\n");
-		}
 		qLed = new RoundLED(LED.Colors.RED);
 		in = new JButton();
 		in.setPreferredSize(new Dimension(50, 30));
@@ -350,24 +363,6 @@ public class ELFFrontPanel extends JPanel
 		disp = new JLabel[2];
 		Icon sw_w_on = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_on.png"));
 		Icon sw_w_off = new ImageIcon(ELFFrontPanel.class.getResource("icons/toggle_off.png"));
-		// TODO: 7-segment displays... or configurable?
-		//String f = "TIL311.ttf";
-		String f = "FND500x.ttf";
-		float fz = 30f;
-		fw = 30;
-		try {
-			java.io.InputStream ttf;
-			ttf = ELFFrontPanel.class.getResourceAsStream(f);
-			if (ttf != null) {
-				dspFont = Font.createFont(Font.TRUETYPE_FONT, ttf);
-				dspFont = dspFont.deriveFont(fz);
-			}
-		} catch (Exception ee) {
-			ee.printStackTrace();
-		}
-		if (dspFont == null) {
-			System.err.format("No %s\n", f);
-		}
 		props.setProperty("hexkeypad_elf2", "yes");
 		kpd = new HexKeyPad(props, intr);
 		qLed = new RoundLED(LED.Colors.RED);
