@@ -19,6 +19,8 @@ Optional hardware add-ons include:
 * [RS232 interface connected to Q/EFn pins](https://htmlpreview.github.io/?https://github.com/durgadas311/cosmac-elf/blob/master/sim/docs/quart.html)
 * [CDP1854 UART](https://htmlpreview.github.io/?https://github.com/durgadas311/cosmac-elf/blob/master/sim/docs/cdp1854.html)
 
+[Elf-II Running Invaders](INVADERS.md)
+
 A plain-text configuration file may be used to add optional hardware and expand RAM.
 
 The simulator provides a
@@ -33,9 +35,9 @@ of a configuration file ("[]" indicates optional, not literal characters).
 
 The "Debug" menu provides methods for debugging and other conveniences.
 
-![Example](photos/keypad-1.png)
+![Example](photos/keypad-2.png)
 ![Example](photos/teletype-2.png)
-![Example](photos/elf2-1.png)
+![Example](photos/elf2-3.png)
 
 An original ELF from James Brown
 (http://www.cosmacelf.com/gallery/elf-and-microtutors/)

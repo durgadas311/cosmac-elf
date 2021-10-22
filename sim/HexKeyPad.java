@@ -103,6 +103,8 @@ public class HexKeyPad extends JFrame
 		Color ky = new Color(240,240,220);
 		Color tx = new Color(0,0,0);
 		Border lb = BorderFactory.createBevelBorder(BevelBorder.RAISED);
+		int fz = 24;
+		Font ft = new Font("Sans-serif", Font.PLAIN, fz);
 		for (int x = 0; x < 17; ++x) {
 			btns[x] = new JButton();
 			btns[x].setPreferredSize(new Dimension(50, 50));
@@ -114,17 +116,22 @@ public class HexKeyPad extends JFrame
 			btns[x].setFocusable(false);
 			if (x < 16) {
 				btns[x].setMnemonic(x + 0x1000);
+				btns[x].setFont(ft);
 				// TODO: decoder vs. scanned, not ELF2 vs ...
 				if (elf2) {
 					btns[x].addActionListener(this);
 				} else {
 					btns[x].addMouseListener(this);
 				}
-				btns[x].setText(String.format("%X", x));
+				if (x == 0) {
+					btns[x].setText("\u00d8");
+				} else {
+					btns[x].setText(String.format("%X", x));
+				}
 			} else {
 				// must be IN button...
 				btns[x].setText("I");
-				btns[x].setFont(new Font("Serif", Font.BOLD, 12));
+				btns[x].setFont(new Font("Serif", Font.PLAIN, fz));
 			}
 		}
 		getContentPane().setBackground(bg);

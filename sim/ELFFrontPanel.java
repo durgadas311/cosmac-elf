@@ -194,7 +194,7 @@ public class ELFFrontPanel extends JPanel
 		in.setOpaque(false);
 		in.setBackground(bg);
 		in.setContentAreaFilled(false);
-		in.setMnemonic(0x100c);
+		in.setMnemonic(IN + 0x1000);
 		// 0-7 are data bits, ...
 		for (int x = 0; x < 11; ++x) {
 			btns[x] = new JCheckBox();
@@ -374,7 +374,7 @@ public class ELFFrontPanel extends JPanel
 		in = kpd.getInBtn();
 		in.addMouseListener(this);
 		in.addActionListener(this);
-		in.setMnemonic(0x100c);
+		in.setMnemonic(IN + 0x1000);
 		// 0-7 are data bits, ... not used here
 		for (int x = LOAD; x < 11; ++x) {
 			btns[x] = new JCheckBox();
@@ -566,9 +566,10 @@ public class ELFFrontPanel extends JPanel
 		// If ROM...
 		if (props.getProperty("prom") != null) {
 			pan = getROMJumper();
-			gc.gridy = 3;
-			gc.gridx = 0;
-			gc.gridwidth = 10;
+			pan.setPreferredSize(new Dimension(85, 20));
+			gc.gridy = 2;
+			gc.gridx = 6;
+			gc.gridwidth = 2;
 			gb.setConstraints(pan, gc);
 			add(pan);
 			if (auto) {

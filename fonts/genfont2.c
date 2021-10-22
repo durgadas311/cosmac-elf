@@ -11,7 +11,7 @@
 double seg_t = 126.4;
 double seg_h = 764.72;
 double seg_w = 673.08;
-double skew = 2.0 / 23.0;
+double skew = 2.0 / 23.0;	// 5 degrees slant
 double gap = 56.88;
 double org_x = 337.2;
 double org_y = 167.48;
