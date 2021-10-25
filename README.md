@@ -6,7 +6,7 @@
 This simulator aspires to replicate the experience of
 using the "COS/MAC ELF" home-built computer, as described
 in these
-![Popular Electronics articles](http://www.exemark.com/Microcontrollers/PopularElecwebc.pdf).
+[Popular Electronics articles](http://www.exemark.com/Microcontrollers/PopularElecwebc.pdf).
 
 The simulator is contained entirely in the [JAR file](bin/VirtualCOSMAC_ELF.jar).
 
